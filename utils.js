@@ -1,5 +1,6 @@
 const { createObjectCsvWriter } = require("csv-writer")
 const puppeteer = require("puppeteer");
+const fetch = require("node-fetch");
 const csv = require('csv-parser');
 const reader = require('xlsx');
 const path = require('path');
