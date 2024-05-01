@@ -44,8 +44,8 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = $('ul.subcat > li > a')
+            .map((i, a) => 'https://www.lighthome.ir' + $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,7 +125,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('.pro_second_box  .s_title_block > a')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -141,7 +141,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 }
 
 
-                nextPageBtn = await page.$$('notFound')
+                nextPageBtn = await page.$$('a.page-link.next')
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
@@ -159,14 +159,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://www.lighthome.ir/']
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,

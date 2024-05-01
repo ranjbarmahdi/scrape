@@ -109,11 +109,10 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
-                    .map((i, a) => $(a).text().trim()).get().join(" > ")
-               : "";
+          data["title"] = $('h1.product_name ').length ? $('h1.product_name ').text().trim() : "";
+          data["category"] = $('.breadcrumb_nav > ul > li:not([class=navigation-pipe]):lt(-1):last').length
+               ? $('.breadcrumb_nav > ul > li:not([class=navigation-pipe]):lt(-1):last')
+                    .map((i, a) => $(a).text().trim()).get().join(" > ")  : "";
 
           data["brand"] = $('notFound').text()?.trim() || '';
 
@@ -121,27 +120,32 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           data["price"] = "";
           data["xpath"] = "";
 
-          const offPercent = $('notFound').get()
+          const offPercent = $('.product-prices .regular-price').get()
           if (offPercent.length) {
-               data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-               data["xpath"] = "";
+               data["price"] = $('.product-prices .price').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+               data["xpath"] = "/html/body/div[1]/div[1]/div[1]/div/main/section[1]/div[1]/div/div/div[2]/div/div[2]/div[3]/div[1]/div[1]/div[2]/div/span[1]/text()";
           }
           else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
+               data["price"] = $('.product-price .price').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[1]/div[1]/div[1]/div/main/section[1]/div[1]/div/div/div[2]/div/div[2]/div[3]/div[1]/div[1]/div[1]/div/span/text()';
           }
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.tab-pane-body .product-features > dl')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+               const key = $(row).find('> dt:first-child').text()?.trim()
+               const value = $(row).find('> dd').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
                specification[key] = value;
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
+
+
+          if('برند' in specification) {
+               data["brand"] = specification['برند']
+          }
 
           // descriptionString
           const descriptionString = $('notFound')
@@ -153,8 +157,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('.pro_gallery_thumb ')
+               .map((i, img) => $(img).attr("src").replace(/(cart_default)/g, "superlarge_default")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -210,7 +214,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/drTamin");
+          const DATA_DIR = path.normalize(__dirname + "/lightHome");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
