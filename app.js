@@ -161,6 +161,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                .map((i, img) => $(img).attr("src").replace(/(cart_default)/g, "superlarge_default")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
+          console.log("image urls :", imagesUrls);
           await downloadImages(imagesUrls, imagesDIR, uuid)
 
 
@@ -229,11 +230,11 @@ async function main() {
           const randomProxy = getRandomElement(proxyList);
 
           // Lunch Browser
-          browser = await getBrowser(randomProxy, true, false);
+          browser = await getBrowser(randomProxy, false, false);
           page = await browser.newPage();
           await page.setViewport({
-               width: 1920,
-               height: 1080,
+               width: 1440,
+               height: 810,
           });
 
 
