@@ -372,10 +372,18 @@ async function main() {
 
 
           // get product page url from db
-          await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
+          urlRow = await removeUrl();
+          if (urlRow?.url) {
+               await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
+
+
+
+                    
+               await insertUrlToVisited(urlRow?.url);
                
-          await insertUrlToVisited(urlRow?.url);
-               
+
+          }
+
      }
      catch (error) {
           console.log("Error In main Function", error);
