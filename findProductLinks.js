@@ -44,9 +44,22 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
-
+        const mainLinks = [
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCIrLrIyxSVexpdfdGN1ZG9yFUBrOCI3LTI0MWI5IjorMXY1b3QSX3RjdDRexlYDIms1',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCIrLrIyxSVexpdfdGN1ZG9yFUBrOCI0Mjp1NTB2IjorMXY1b3QSX3RjdDRexlYDIms1',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCI1MWBaNjB1IjorMmY1b3QSX3RjdDRexlYDIrwrMTFaMWF4MyI6IjUwdD9yR190B3Vpb3QJVrQ70',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCI5NTE5NjFcIjorMmY1b3QSX3RjdDRexlYDIrwrMTFaMWF4MyI6IjUwdD9yR190B3Vpb3QJVrQ70',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCI5MaE1LWtcIjorMmY1b3QSX3RjdDRexlYDIrwrMTFaMWF4MyI6IjUwdD9yR190B3Vpb3QJVrQ70',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCIrLrIyxSVexpdfdGN1ZG9yFUBrOCI0Mjt5MjB2IjorMXY1b3QSX3RjdDRexlYDIms1',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCIrLrIyxSVexpdfdGN1ZG9yFUBrOCI2NTpyLTJ2IjorMXY1b3QSX3RjdDRexlYDIms1',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCI4NWxwMTx5IjorMmY1b3QSX3RjdDRexlYDIrwrLTp2NTAwMyI6IjUwdD9yR190B3Vpb3QJVrQ70',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCIwNTE4LWpaIjorMmY1b3QSX3RjdDRexlYDIrwrLTp2NTAwMyI6IjUwdD9yR190B3Vpb3QJVrQ70',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCIyLTpcMWBcIjorMmY1b3QSX3RjdDRexlYDIrwrLTp2NTAwMyI6IjUwdD9yR190B3Vpb3QJVrQ70',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCI0LTxyNWF5IjorMmY1b3QSX3RjdDRexlYDIrwrLTp2NTAwMyI6IjUwdD9yR190B3Vpb3QJVrQ70',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCIaNWM0MTBaIjorMmY1b3QSX3RjdDRexlYDIrwrLTp2NTAwMyI6IjUwdD9yR190B3Vpb3QJVrQ70',
+            'https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCIrLrIyxSVexpdfdGN1ZG9yFUBrOCIaNWE3MaI5IjorMXY1b3QSX3RjdDRexlYDIms1',
+            'https://blanlighting.com/products/detail/?qn=110033',
+        ]
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
 
@@ -125,8 +138,8 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
+                const productsUrls = $('#ContentPlaceHolder1_d_product_items_main > a')
+                    .map((i, e) => 'https://blanlighting.com/products/' + $(e).attr('href'))
                     .get()
 
                 // insert prooduct links to unvisited
@@ -141,7 +154,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 }
 
 
-                nextPageBtn = await page.$$('notFound')
+                nextPageBtn = await page.$$('input[vpage=next]:not(.aspNetDisabled)')
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
@@ -159,14 +172,13 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://blanlighting.com/products/?qg=fHIrLrIaxSVexpdfdGN1ZG9yFUBrOCIrLrIyxSVexpdfdGN1ZG9yFUBrOCIrLrIcxSVexpdfdGN1ZG9yFUBrvw2']
 
-        // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,

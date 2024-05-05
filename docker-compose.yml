@@ -9,33 +9,33 @@ services:
     ports:
       - "4011:4008"
     volumes:
-      - ./-----:/usr/src/app/-----
+      - ./blanLighting:/usr/src/app/blanLighting
     networks:
       - custom_network
 
-  # node-app-2:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4012:4008"
-  #   volumes:
-  #     - ./-----:/usr/src/app/-----
-  #   networks:
-  #     - custom_network
+  node-app-2:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4012:4008"
+    volumes:
+      - ./blanLighting:/usr/src/app/blanLighting
+    networks:
+      - custom_network
 
-  # node-app-3:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4013:4008"
-  #   volumes:
-  #     - ./-----:/usr/src/app/-----
-  #   networks:
-  #     - custom_network
+  node-app-3:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4013:4008"
+    volumes:
+      - ./blanLighting:/usr/src/app/blanLighting
+    networks:
+      - custom_network
 
   # node-app-4:
   #   user: root
