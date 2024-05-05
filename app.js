@@ -164,10 +164,10 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           
                     // Download Images
                     let imagesUrls = $('.S_Products_Detail_Slide_Item > center > img')
-                         .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+                         .map((i, img) => $(img).attr("src")?.replace(/(-[0-9]+x[0-9]+)/g, "")).get();
           
                     const otherImages = $('.S_Products_Detail_Tech_Info_Pic_File')
-                         .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+                         .map((i, img) => $(img).attr("src")?.replace(/(-[0-9]+x[0-9]+)/g, "")).get();
                     imagesUrls.push(...otherImages)
 
                     imagesUrls = Array.from(new Set(imagesUrls));
