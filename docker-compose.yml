@@ -9,7 +9,7 @@ services:
     ports:
       - "4011:4008"
     volumes:
-      - ./-----:/usr/src/app/-----
+      - ./eefaCeram:/usr/src/app/eefaCeram
     networks:
       - custom_network
 
