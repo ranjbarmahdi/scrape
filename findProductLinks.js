@@ -44,8 +44,7 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = require('./links.json');
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,8 +124,8 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
+                const productsUrls = $('tbody > tr > td:last-child > a')
+                    .map((i, e) =>'https://www.mazinoor.com' + $(e).attr('href'))
                     .get()
 
                 // insert prooduct links to unvisited
@@ -159,7 +158,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL =['https://www.mazinoor.com']
 
         // get random proxy
         const proxyList = [''];

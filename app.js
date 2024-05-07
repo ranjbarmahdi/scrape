@@ -109,7 +109,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
+          data["title"] = $('h4.text-lg.font-medium.mb-4').length ? $('h4.text-lg.font-medium.mb-4').text().trim() : "";
           data["category"] = $('notFound').last().length
                ? $('notFound').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
@@ -127,18 +127,20 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                data["xpath"] = "";
           }
           else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
+               data["price"] = $('.list-disc > li:last > span:last').text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[2]/div/main/div/div[2]/ul/li[last()]/span[2]/text()';
           }
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.list-disc > li')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
-               specification[key] = value;
+               const key = $(row).find('> span.font-medium').text()?.trim();
+               const value = $(row).find('> span:last-child').text()?.trim();
+               if(!key?.includes('قيمت')){
+                    specification[key] = value;
+               }
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
@@ -153,15 +155,22 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('.splide__list > li > img')
+               .map((i, img) => 'https://www.mazinoor.com/' +  $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
 
 
           // download pdfs
-          let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
+          let pdfUrls = $('a').map((i, e) => {
+               const href = $(e).attr('href');
+               if(!href?.includes('download')) return `https://www.mazinoor.com${href}`;
+               return href;
+          })
+               .get()
+               .filter(href => (href?.includes('pdf') && !href.includes("pricelist")));
+
           pdfUrls = Array.from(new Set(pdfUrls))
           for (let i = 0; i < pdfUrls.length; i++) {
                try {
@@ -210,7 +219,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/drTamin");
+          const DATA_DIR = path.normalize(__dirname + "/maziNoor");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -236,8 +245,8 @@ async function main() {
           // get product page url from db
           urlRow = await removeUrl();
 
-          if (urlRow?.url) {
-               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
+          if ('urlRow?.url') {
+               const productInfo = await scrapSingleProduct(page, 'https://www.mazinoor.com/luminaire/3198001002', IMAGES_DIR, DOCUMENTS_DIR);
                const insertQueryInput = [
                     productInfo.URL,
                     productInfo.xpath,
