@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS visited (
+CREATE TABLE IF NOT EXISTS public.visited (
 	id serial4 NOT NULL,
 	url text NULL,
 	CONSTRAINT visited_pkey PRIMARY KEY (id),
@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS problem (
 	CONSTRAINT problem_url_key UNIQUE (url)
 );
 
-CREATE TABLE IF NOT EXISTS products (
+
+CREATE TABLE public.products (
 	id serial4 NOT NULL,
 	url text NOT NULL,
 	xpath text NULL,
@@ -34,7 +35,5 @@ CREATE TABLE IF NOT EXISTS products (
 	"row" int4 NULL,
 	CONSTRAINT products_pkey PRIMARY KEY (id),
 	CONSTRAINT products_sku_key UNIQUE (sku),
-	CONSTRAINT unique_name_url UNIQUE (name, url)
+	CONSTRAINT unique_name_url UNIQUE ("name",url)
 );
-
-
