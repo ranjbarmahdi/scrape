@@ -44,11 +44,11 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('#menu-item-9134 > ul > li:lt(-1) > a')
+        const mainLinks = $('notFounjd')
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -125,8 +125,8 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('h2 > a')
-                    .map((i, e) => $(e).attr('href'))
+                const productsUrls = $('.fbody > a')
+                    .map((i, e) => 'http://insize.ir' + $(e).attr('href'))
                     .get()
 
                 // insert prooduct links to unvisited
@@ -159,7 +159,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['https://www.semnantileco.com/']
+        const INITIAL_PAGE_URL = ['http://insize.ir/Production.html']
 
         // get random proxy
         const proxyList = [''];
