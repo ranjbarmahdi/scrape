@@ -117,7 +117,7 @@ services:
     ports:
       - "4020:4008"
     volumes:
-      - ./maziNoor:/usr/src/app/-----
+      - ./maziNoor:/usr/src/app/maziNoor
     networks:
       - custom_network
 

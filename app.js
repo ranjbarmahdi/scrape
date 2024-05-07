@@ -163,29 +163,29 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
 
           // download pdfs
-          let pdfUrls = $('a').map((i, e) => {
-               const href = $(e).attr('href');
-               if(!href?.includes('download')) return `https://www.mazinoor.com${href}`;
-               return href;
-          })
-               .get()
-               .filter(href => (href?.includes('pdf') && !href.includes("pricelist")));
+          // let pdfUrls = $('a').map((i, e) => {
+          //      const href = $(e).attr('href');
+          //      if(!href?.includes('download')) return `https://www.mazinoor.com${href}`;
+          //      return href;
+          // })
+          //      .get()
+          //      .filter(href => (href?.includes('pdf') && !href.includes("pricelist")));
 
-          pdfUrls = Array.from(new Set(pdfUrls))
-          for (let i = 0; i < pdfUrls.length; i++) {
-               try {
-                    const pdfUrl = imagesUrls[i];
-                    const response = await fetch(pdfUrl);
-                    if (response.ok) {
-                         const buffer = await response.buffer();
-                         const localFileName = `${uuid}-${i + 1}.pdf`;
-                         const documentDir = path.normalize(documentsDir + "/" + localFileName);
-                         fs.writeFileSync(documentDir, buffer);
-                    }
-               } catch (error) {
-                    console.log("Error In Download Documents", error);
-               }
-          }
+          // pdfUrls = Array.from(new Set(pdfUrls))
+          // for (let i = 0; i < pdfUrls.length; i++) {
+          //      try {
+          //           const pdfUrl = imagesUrls[i];
+          //           const response = await fetch(pdfUrl);
+          //           if (response.ok) {
+          //                const buffer = await response.buffer();
+          //                const localFileName = `${uuid}-${i + 1}.pdf`;
+          //                const documentDir = path.normalize(documentsDir + "/" + localFileName);
+          //                fs.writeFileSync(documentDir, buffer);
+          //           }
+          //      } catch (error) {
+          //           console.log("Error In Download Documents", error);
+          //      }
+          // }
 
 
           // Returning Tehe Required Data For Excel
@@ -245,8 +245,8 @@ async function main() {
           // get product page url from db
           urlRow = await removeUrl();
 
-          if ('urlRow?.url') {
-               const productInfo = await scrapSingleProduct(page, 'https://www.mazinoor.com/luminaire/3198001002', IMAGES_DIR, DOCUMENTS_DIR);
+          if (urlRow?.url) {
+               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
                const insertQueryInput = [
                     productInfo.URL,
                     productInfo.xpath,
