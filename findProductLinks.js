@@ -44,12 +44,25 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = [
+            "https://kasrataps.ir/product-category/%d8%b4%db%8c%d8%b1%d8%a2%d9%84%d8%a7%d8%aa-%d8%a2%d8%b4%d9%be%d8%b2%d8%ae%d8%a7%d9%86%d9%87/",
+            "https://kasrataps.ir/product-category/lever-faucets/wash-basin/",
+            "https://kasrataps.ir/product-category/lever-faucets/toilet/",
+            "https://kasrataps.ir/product-category/lever-faucets/bathroom/",
+            "https://kasrataps.ir/product-category/built-in-faucets/",
+            "https://kasrataps.ir/product-category/shower-set/",
+            "https://kasrataps.ir/product-category/flush-tank/",
+            "https://kasrataps.ir/product-category/purification-kitchen/",
+            "https://kasrataps.ir/product-category/pull-down-kitchen/",
+            "https://kasrataps.ir/product-category/spring-kitchen/"
+        ]
+
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
 
+
+        console.log(allMainLinks);
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
     }
@@ -125,9 +138,10 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('.elementor-heading-title > a')
                     .map((i, e) => $(e).attr('href'))
                     .get()
+                    .filter(url => url?.includes('product'))
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -159,14 +173,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://kasrataps.ir/']
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,

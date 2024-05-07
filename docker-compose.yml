@@ -9,21 +9,21 @@ services:
     ports:
       - "4011:4008"
     volumes:
-      - ./-----:/usr/src/app/-----
+      - ./kasraTaps:/usr/src/app/kasraTaps
     networks:
       - custom_network
 
-  # node-app-2:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4012:4008"
-  #   volumes:
-  #     - ./-----:/usr/src/app/-----
-  #   networks:
-  #     - custom_network
+  node-app-2:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4012:4008"
+    volumes:
+      - ./kasraTaps:/usr/src/app/kasraTaps
+    networks:
+      - custom_network
 
   # node-app-3:
   #   user: root
