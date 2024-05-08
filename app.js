@@ -249,7 +249,7 @@ async function main() {
           const randomProxy = getRandomElement(proxyList);
 
           // Lunch Browser
-          browser = await getBrowser(randomProxy, false, false);
+          browser = await getBrowser(randomProxy, true, false);
           page = await browser.newPage();
           await page.setViewport({
                width: 1980,
@@ -292,8 +292,13 @@ async function main() {
      finally {
           // Close page and browser
           console.log("End");
-          await page.close();
-          await browser.close();
+          if (page) {
+               await page.close();
+          }
+
+          if (browser) {
+               await browser.close();
+          }
           await delay(1000);
      }
 }
