@@ -11,6 +11,20 @@ const os = require('os');
 // const CronJob = require('cron').CronJob;
 
 
+// ============================================ existsUrl
+async function existsUrl() {
+     const existsQuery = `
+        SELECT * FROM unvisited u 
+        limit 1
+    `
+     try {
+          const urlRow = await db.oneOrNone(existsQuery);
+          return urlRow;
+     } catch (error) {
+          console.log("we have no url", error);
+     }
+}
+
 // ============================================ removeUrl
 async function removeUrl() {
      const existsQuery = `
@@ -157,13 +171,18 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('.pro_gallery_thumb ')
-               .map((i, img) => $(img).attr("src").replace(/(cart_default)/g, "superlarge_default")).get();
+          let imagesUrls = $('.easyzoom--overlay > a > picture > img.no-lazy.pro_gallery_item ')
+               .map((i, img) => $(img).attr("src")?.replace('home_default', 'superlarge_default')?.replace(/(cart_default)/g, "superlarge_default"))
+               .get()
+               .filter(img => !img?.endsWith('png') && !img?.endsWith('gif'));
+          
+          // let imagesUrls = await page.$$('a > picture > img')
+          // imagesUrls = await Promise.all(imagesUrls.map(async (element) => {
+          //      return await (await element.getProperty('src')).jsonValue();
+          // }));
 
           imagesUrls = Array.from(new Set(imagesUrls));
-          console.log("image urls :", imagesUrls);
-          await downloadImages(imagesUrls, imagesDIR, uuid)
-
+          await downloadImages(imagesUrls, imagesDIR, uuid);
 
           // download pdfs
           let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
@@ -233,8 +252,8 @@ async function main() {
           browser = await getBrowser(randomProxy, false, false);
           page = await browser.newPage();
           await page.setViewport({
-               width: 1440,
-               height: 810,
+               width: 1980,
+               height: 800,
           });
 
 
@@ -242,7 +261,7 @@ async function main() {
           urlRow = await removeUrl();
 
           if (urlRow?.url) {
-               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
+               const productInfo = await scrapSingleProduct(page, 'https://www.lighthome.ir/miniature-box/26675-%D8%AC%D8%B9%D8%A8%D9%87-%D9%81%DB%8C%D9%88%D8%B2-24-%D8%B9%D8%AF%D8%AF%DB%8C-%D9%88%DB%8C%DA%A9%D8%AA%D9%88%D8%B1-%D9%85%D8%AF%D9%84-%D8%AA%D9%88%DA%A9%D8%A7%D8%B1.html?fast_search=fs', IMAGES_DIR, DOCUMENTS_DIR);
                const insertQueryInput = [
                     productInfo.URL,
                     productInfo.xpath,
@@ -312,11 +331,28 @@ async function main() {
 
 // job.start()
 
+// let usageMemory = (os.totalmem() - os.freemem()) / (1024 * 1024 * 1024);
+// let memoryUsagePercentage = checkMemoryUsage();
+// let cpuUsagePercentage = getCpuUsagePercentage();
+
+// if (memoryUsagePercentage <= 85 && cpuUsagePercentage <= 80 && usageMemory <= 28) {
+//      main();
+// }
+// else {
+//      const status = `status:
+//      memory usage = ${usageMemory}
+//      percentage of memory usage = ${memoryUsagePercentage}
+//      percentage of cpu usage = ${cpuUsagePercentage}\n`
+
+//      console.log("main function does not run.\n");
+//      console.log(status);
+// }
+
 let usageMemory = (os.totalmem() - os.freemem()) / (1024 * 1024 * 1024);
 let memoryUsagePercentage = checkMemoryUsage();
 let cpuUsagePercentage = getCpuUsagePercentage();
-
-if (memoryUsagePercentage <= 85 && cpuUsagePercentage <= 80 && usageMemory <= 28) {
+     
+if (memoryUsagePercentage <= 85 && cpuUsagePercentage <= 80 && usageMemory <= 15) {
      main();
 }
 else {
@@ -329,8 +365,34 @@ else {
      console.log(status);
 }
 
+// async function main2() {
+//      let urlRow = null;
+//      do {
+//           try {
+//                let usageMemory = (os.totalmem() - os.freemem()) / (1024 * 1024 * 1024);
+//                let memoryUsagePercentage = checkMemoryUsage();
+//                let cpuUsagePercentage = getCpuUsagePercentage();
+                    
+//                if (memoryUsagePercentage <= 85 && cpuUsagePercentage <= 80 && usageMemory <= 15) {
+//                     await main();
+//                }
+//                else {
+//                     const status = `status:
+//                     memory usage = ${usageMemory}
+//                     percentage of memory usage = ${memoryUsagePercentage}
+//                     percentage of cpu usage = ${cpuUsagePercentage}\n`
+     
+//                     console.log("main function does not run.\n");
+//                     console.log(status);
+//                }
+               
+//                urlRow = await existsUrl();
+//                await delay(1000);
+//           } catch (error) {
+//                console.log("Errir in main2 Function :", error);
+//           }
+//      }
+//      while (urlRow);
+// }
 
-
-
-
-
+// main2()
