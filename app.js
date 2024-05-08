@@ -250,7 +250,7 @@ async function main() {
 
           const rand = (Math.random() * 3 * 1000)
           await delay(rand);
-          
+
           // Lunch Browser
           browser = await getBrowser(randomProxy, true, false);
           page = await browser.newPage();
@@ -264,7 +264,7 @@ async function main() {
           urlRow = await removeUrl();
 
           if (urlRow?.url) {
-               const productInfo = await scrapSingleProduct(page, 'https://www.lighthome.ir/miniature-box/26675-%D8%AC%D8%B9%D8%A8%D9%87-%D9%81%DB%8C%D9%88%D8%B2-24-%D8%B9%D8%AF%D8%AF%DB%8C-%D9%88%DB%8C%DA%A9%D8%AA%D9%88%D8%B1-%D9%85%D8%AF%D9%84-%D8%AA%D9%88%DA%A9%D8%A7%D8%B1.html?fast_search=fs', IMAGES_DIR, DOCUMENTS_DIR);
+               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
                const insertQueryInput = [
                     productInfo.URL,
                     productInfo.xpath,
