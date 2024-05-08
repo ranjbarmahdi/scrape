@@ -248,6 +248,9 @@ async function main() {
           const proxyList = [''];
           const randomProxy = getRandomElement(proxyList);
 
+          const rand = (Math.random() * 3 * 1000)
+          await delay(rand);
+          
           // Lunch Browser
           browser = await getBrowser(randomProxy, true, false);
           page = await browser.newPage();
@@ -299,6 +302,7 @@ async function main() {
           if (browser) {
                await browser.close();
           }
+
           await delay(1000);
      }
 }
@@ -358,6 +362,7 @@ let memoryUsagePercentage = checkMemoryUsage();
 let cpuUsagePercentage = getCpuUsagePercentage();
      
 if (memoryUsagePercentage <= 85 && cpuUsagePercentage <= 80 && usageMemory <= 15) {
+     
      main();
 }
 else {
