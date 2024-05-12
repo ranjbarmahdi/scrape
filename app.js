@@ -125,13 +125,13 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
+          data["title"] = $('.titleProduct > p').length ? $('.titleProduct > p').text().trim() : "";
           data["category"] = $('notFound').last().length
                ? $('notFound').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
-          data["brand"] = $('notFound').text()?.trim() || '';
+          data["brand"] = 'فانتونی (Fantoni)'
 
           data['unitOfMeasurement'] = 'عدد'
           data["price"] = "";
@@ -149,11 +149,12 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
-          for (let i = 0; i < rowElements.length; i++) {
-               const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+          // const rowElements = $(".innerschema span:not(.virgol)");
+          const rowElements = $("notFound");
+          for (let i = 0; i < rowElements.length; i += 2) {
+               const row = rowElements.slice(i, i + 2);
+               const key = $(row[1])?.text()?.replace(':', '')?.trim();
+               const value = $(row[0])?.text()?.replace(',', '')?.trim();
                specification[key] = value;
           }
           specification = omitEmpty(specification);
@@ -169,15 +170,15 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('div.gallery img')
+               .map((i, img) => 'https://fantonigroup.ir' + $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
 
 
           // download pdfs
-          let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
+          let pdfUrls = $('div.catalogdl a').map((i, e) => 'https://fantonigroup.ir' + $(e).attr('href')).get()
           pdfUrls = Array.from(new Set(pdfUrls))
           for (let i = 0; i < pdfUrls.length; i++) {
                try {
@@ -226,7 +227,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/fantoni");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -292,31 +293,31 @@ async function main() {
 
 
 // ============================================ run_1
-async function run_1(){
-     if (checkMemoryCpu(85, 80, 15)) {
+async function run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
+     if (checkMemoryCpu(memoryUsagePercentage, cpuUsagePercentage, usageMemory)) {
           main();
      }
      else {
-          const status = `status:
-          memory usage = ${usageMemory}
-          percentage of memory usage = ${memoryUsagePercentage}
-          percentage of cpu usage = ${cpuUsagePercentage}\n`
+          // const status = `status:
+          // memory usage = ${usageMemory}
+          // percentage of memory usage = ${memoryUsagePercentage}
+          // percentage of cpu usage = ${cpuUsagePercentage}\n`
      
           console.log("main function does not run.\n");
-          console.log(status);
+          // console.log(status);
      }
 }
 
 
 // ============================================ run_2
-async function run_2(){
+async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
      let existsUrl;
 
      do {
          
           existsUrl = await existsUrl();
           if(existsUrl){
-               await run_1();
+               await run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory);
           }
 
      } while (existsUrl);

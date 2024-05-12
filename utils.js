@@ -100,13 +100,13 @@ async function downloadImages(imagesUrls, imagesDIR, uuid) {
             const imageUrl = imagesUrls[i];
             const response = await fetch(imageUrl);
             if (response.status == 200) {
-
+                
                 const buffer = await response.buffer();
                 let imageType = path.extname(imageUrl);
                 if (!imageType) {
                     imageType = '.jpg'
                 }
-                const localFileName = `${uuid}-${i + 1}${imageType}`;
+                const localFileName = `${uuid}-${i + 1}.jpg`;
                 const imageDir = path.normalize(
                     imagesDIR + "/" + localFileName
                 );

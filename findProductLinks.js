@@ -1,5 +1,5 @@
 const cheerio = require("cheerio");
-const { getBrowser, getRandomElement, shuffleArray, delay } = require('./utils')
+const { getBrowser, getRandomElement, shuffleArray, delay, scrollToEnd } = require('./utils')
 const db = require('./config.js');
 
 
@@ -44,8 +44,28 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = [
+            "https://fantonigroup.ir/products/Hings",
+            "https://fantonigroup.ir/products/Drawer-Slides",
+            "https://fantonigroup.ir/products/Wall-Hang-Mechanisms",
+            "https://fantonigroup.ir/products/Accessories-Corner-Base-Units",
+            "https://fantonigroup.ir/product/Accessories-For-Corner-Base-Units",
+            "https://fantonigroup.ir/product/Accessories-For-Base-Units",
+            "https://fantonigroup.ir/product/Accessories-For-Wall-Hang-Units",
+            "https://fantonigroup.ir/product/Accessories-For-Cabinets-Tops",
+            "https://fantonigroup.ir/product/Aluminium-Profils",
+            "https://fantonigroup.ir/product/Accessories-For-Wardrobe",
+            "https://fantonigroup.ir/product/Wardrobe-Door-Mechanisms",
+            "https://fantonigroup.ir/product/Profile-Door-Handles",
+            "https://fantonigroup.ir/product/Fiting-And-Accessories",
+            "https://fantonigroup.ir/product/Lighting-And-Electrical-Equipment",
+            "https://fantonigroup.ir/product/Cutlery-Trays",
+            "https://fantonigroup.ir/product/Kitchen-Sinks",
+            "https://fantonigroup.ir/product/Built-in-Wastebins",
+            "https://fantonigroup.ir/product/Midway-Units",
+            "https://fantonigroup.ir/product/Accessories-For-Bathroom",
+            "https://fantonigroup.ir/product/Office-Desk-Base"
+        ]
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -121,12 +141,15 @@ async function findAllProductsLinks(page, allPagesLinks) {
             do {
                 c++;
                 console.log(c);
+
+                await scrollToEnd(page);
+
                 const html = await page.content();
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
+                const productsUrls = $('a.product')
+                    .map((i, e) => 'https://fantonigroup.ir' + $(e).attr('href'))
                     .get()
 
                 // insert prooduct links to unvisited
@@ -159,14 +182,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://fantonigroup.ir/product']
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,
