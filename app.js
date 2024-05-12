@@ -210,7 +210,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/drTamin");
+          const DATA_DIR = path.normalize(__dirname + "/directory");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -220,23 +220,23 @@ async function main() {
           if (!fs.existsSync(DOCUMENTS_DIR)) { fs.mkdirSync(DOCUMENTS_DIR); }
           if (!fs.existsSync(IMAGES_DIR)) { fs.mkdirSync(IMAGES_DIR); }
 
-          // get random proxy
-          const proxyList = [''];
-          const randomProxy = getRandomElement(proxyList);
-
-          // Lunch Browser
-          browser = await getBrowser(randomProxy, true, false);
-          page = await browser.newPage();
-          await page.setViewport({
-               width: 1920,
-               height: 1080,
-          });
-
-
           // get product page url from db
           urlRow = await removeUrl();
 
           if (urlRow?.url) {
+
+               // get random proxy
+               const proxyList = [''];
+               const randomProxy = getRandomElement(proxyList);
+
+               // Lunch Browser
+               browser = await getBrowser(randomProxy, true, false);
+               page = await browser.newPage();
+               await page.setViewport({
+                    width: 1920,
+                    height: 1080,
+               });
+               
                const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
                const insertQueryInput = [
                     productInfo.URL,
@@ -268,8 +268,8 @@ async function main() {
      finally {
           // Close page and browser
           console.log("End");
-          await page.close();
-          await browser.close();
+          if(page) await page.close();
+          if(browser) await browser.close();
           await delay(1000);
      }
 }
