@@ -130,7 +130,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           for (const product of products){
                try {
                     const data = {};
-                    data["title"] = title + $(product).find('>div:last-child').length ? $(product).find('>div:last-child').text().trim() : "";
+                    data["title"] = `${$(product).find('>div:last-child').length ? $(product).find('>div:last-child').text().trim() : ""} ${title}`;
                     data["category"] = $('notFound').last().length
                          ? $('notFound').last()
                               .map((i, a) => $(a).text().trim()).get().join(" > ")
@@ -269,7 +269,7 @@ async function main() {
           const randomProxy = getRandomElement(proxyList);
 
           // Lunch Browser
-          browser = await getBrowser(randomProxy, false, false);
+          browser = await getBrowser(randomProxy, true, false);
           page = await browser.newPage();
           await page.setViewport({
                width: 1920,
