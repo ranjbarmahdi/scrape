@@ -1,4 +1,4 @@
-const { getBrowser, getRandomElement, delay, checkMemoryUsage, getCpuUsagePercentage, downloadImages } = require('./utils')
+const { getBrowser, getRandomElement, delay, checkMemoryCpu, downloadImages } = require('./utils')
 const omitEmpty = require('omit-empty');
 const { v4: uuidv4 } = require("uuid");
 const fetch = require("node-fetch");
@@ -9,6 +9,22 @@ const fs = require("fs");
 const os = require('os');
 // const cron = require('node-cron');
 // const CronJob = require('cron').CronJob;
+
+
+// ============================================ existsUrl
+async function existsUrl() {
+     const existsQuery = `
+        SELECT * FROM unvisited u 
+        limit 1
+    `
+     try {
+          const urlRow = await db.oneOrNone(existsQuery);
+          if (urlRow) return true;
+          return false;
+     } catch (error) {
+          console.log("we have no url", error);
+     }
+}
 
 
 // ============================================ removeUrl
@@ -275,6 +291,38 @@ async function main() {
 }
 
 
+// ============================================ run_1
+async function run_1(){
+     if (checkMemoryCpu(85, 80, 15)) {
+          main();
+     }
+     else {
+          const status = `status:
+          memory usage = ${usageMemory}
+          percentage of memory usage = ${memoryUsagePercentage}
+          percentage of cpu usage = ${cpuUsagePercentage}\n`
+     
+          console.log("main function does not run.\n");
+          console.log(status);
+     }
+}
+
+
+// ============================================ run_2
+async function run_2(){
+     let existsUrl;
+
+     do {
+         
+          existsUrl = await existsUrl();
+          if(existsUrl){
+               await run_1();
+          }
+
+     } while (existsUrl);
+}
+
+
 // ============================================ Job
 
 // stopTime = 8000
@@ -307,25 +355,6 @@ async function main() {
 
 // job.start()
 
-let usageMemory = (os.totalmem() - os.freemem()) / (1024 * 1024 * 1024);
-let memoryUsagePercentage = checkMemoryUsage();
-let cpuUsagePercentage = getCpuUsagePercentage();
 
-if (memoryUsagePercentage <= 85 && cpuUsagePercentage <= 80 && usageMemory <= 28) {
-     main();
-}
-else {
-     const status = `status:
-     memory usage = ${usageMemory}
-     percentage of memory usage = ${memoryUsagePercentage}
-     percentage of cpu usage = ${cpuUsagePercentage}\n`
-
-     console.log("main function does not run.\n");
-     console.log(status);
-}
-
-
-
-
-
+main();
 

@@ -245,6 +245,18 @@ function getCpuUsagePercentage() {
     return ((1 - totalIdle / totalTick) * 100);
 }
 
+// ============================================ checkMemoryCpu
+async function checkMemoryCpu(memoryUsagePercent, cpuUsagePercent, memoryUsageGig){
+    const usageMemory = (os.totalmem() - os.freemem()) / (1024 * 1024 * 1024);
+    const memoryUsagePercentage = checkMemoryUsage();
+    const cpuUsagePercentage = getCpuUsagePercentage();
+
+    const cond_1 = memoryUsagePercentage <= memoryUsagePercent 
+    const cond_2 = cpuUsagePercentage <= cpuUsagePercent
+    const cond_3 = usageMemory <= memoryUsageGig
+    return cond_1 && cond_2 && cond_3
+}
+
 
 module.exports = {
     writeExcel,
@@ -259,7 +271,8 @@ module.exports = {
     delay,
     shuffleArray,
     checkMemoryUsage,
-    getCpuUsagePercentage
+    getCpuUsagePercentage,
+    checkMemoryCpu
 }
 
 
