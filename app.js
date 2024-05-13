@@ -292,9 +292,9 @@ async function main() {
 
 
 // ============================================ run_1
-async function run_1(){
-     if (checkMemoryCpu(85, 80, 15)) {
-          main();
+async function run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
+     if (checkMemoryCpu(memoryUsagePercentage, cpuUsagePercentage, usageMemory)) {
+          await main();
      }
      else {
           const status = `status:
@@ -309,14 +309,14 @@ async function run_1(){
 
 
 // ============================================ run_2
-async function run_2(){
+async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
      let existsUrl;
 
      do {
          
           existsUrl = await existsUrl();
           if(existsUrl){
-               await run_1();
+               await run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory);
           }
 
      } while (existsUrl);
