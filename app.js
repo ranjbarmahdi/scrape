@@ -1,4 +1,4 @@
-const { getBrowser, getRandomElement, delay, checkMemoryCpu, downloadImages } = require('./utils')
+const { getBrowser, getRandomElement, delay, checkMemoryCpu, downloadImages, downloadImagesAxios } = require('./utils')
 const omitEmpty = require('omit-empty');
 const { v4: uuidv4 } = require("uuid");
 const fetch = require("node-fetch");
@@ -169,16 +169,16 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           // Generate uuidv4
           const uuid = uuidv4().replace(/-/g, "");
 
-          // Download Images
-          let imagesUrls = $('div.gallery img')
-               .map((i, img) => 'https://fantonigroup.ir' + $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          // Download Images $('div.gallery img')
+          let imagesUrls = $('nnnnnnnnnnnnnnnn')
+               .map((i, img) => 'https://fantonigroup.ir' + $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "") + '.jpg').get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
-          await downloadImages(imagesUrls, imagesDIR, uuid)
+          await downloadImagesAxios(imagesUrls, imagesDIR, uuid)
 
 
-          // download pdfs
-          let pdfUrls = $('div.catalogdl a').map((i, e) => 'https://fantonigroup.ir' + $(e).attr('href')).get()
+          // download pdfs $('div.catalogdl a')
+          let pdfUrls = $('nnnnnnnnnnnn').map((i, e) => 'https://fantonigroup.ir' + $(e).attr('href') + '.pdf').get()
           pdfUrls = Array.from(new Set(pdfUrls))
           for (let i = 0; i < pdfUrls.length; i++) {
                try {
@@ -295,7 +295,7 @@ async function main() {
 // ============================================ run_1
 async function run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
      if (checkMemoryCpu(memoryUsagePercentage, cpuUsagePercentage, usageMemory)) {
-          main();
+          await main();
      }
      else {
           // const status = `status:
@@ -311,16 +311,16 @@ async function run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 
 // ============================================ run_2
 async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
-     let existsUrl;
+     let urlExists;
 
      do {
          
-          existsUrl = await existsUrl();
-          if(existsUrl){
+          urlExists = await existsUrl();
+          if(urlExists){
                await run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory);
           }
 
-     } while (existsUrl);
+     } while (urlExists);
 }
 
 
@@ -357,5 +357,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 // job.start()
 
 
-main();
+run_2(80, 80, 14)
 

@@ -4,6 +4,7 @@ const fetch = require("node-fetch");
 const csv = require('csv-parser');
 const reader = require('xlsx');
 const path = require('path');
+const axios = require('axios');
 const fs = require('fs');
 const os = require('os');
 
@@ -118,6 +119,27 @@ async function downloadImages(imagesUrls, imagesDIR, uuid) {
     }
 }
 
+//============================================ Download Images downloadImagesAxios
+async function downloadImagesAxios(imagesUrls, imagesDIR, uuid) {
+    for (let i = 0; i < imagesUrls.length; i++) {
+        try {
+            const imageUrl = imagesUrls[i];
+            const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+            if (response.status === 200) {
+                const buffer = Buffer.from(response.data, 'binary');
+                let imageType = path.extname(imageUrl);
+                if (!imageType) {
+                    imageType = '.jpg'
+                }
+                const localFileName = `${uuid}-${i + 1}.jpg`;
+                const imageDir = path.normalize(imagesDIR + "/" + localFileName);
+                fs.writeFileSync(imageDir, buffer);
+            }
+        } catch (error) {
+            console.log("Error In Download Images", error);
+        }
+    }
+}
 
 //============================================ Login
 async function login(page, url, userOrPhone, pass) {
@@ -272,7 +294,8 @@ module.exports = {
     shuffleArray,
     checkMemoryUsage,
     getCpuUsagePercentage,
-    checkMemoryCpu
+    checkMemoryCpu,
+    downloadImagesAxios
 }
 
 
