@@ -310,16 +310,16 @@ async function run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 
 // ============================================ run_2
 async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
-     let existsUrl;
+     let urlExists;
 
      do {
          
-          existsUrl = await existsUrl();
-          if(existsUrl){
+          urlExists = await existsUrl();
+          if(urlExists){
                await run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory);
           }
 
-     } while (existsUrl);
+     } while (urlExists);
 }
 
 
