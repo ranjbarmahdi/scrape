@@ -125,9 +125,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1').length ? $('h1').text().trim() : "";
+          data["category"] = $('.posted_in > a').first().length
+               ? $('.posted_in > a').first()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
@@ -149,7 +149,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.shop_attributes > tbody > tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
                const key = $(row).find('> th:first-child').text()?.trim()
@@ -158,6 +158,14 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
+
+          if('برند' in specification){
+               data['brand'] = specification['برند'];
+          }
+          else{
+               data['brand'] = 'متفرقه';
+          }
+
 
           // descriptionString
           const descriptionString = $('notFound')
@@ -169,8 +177,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('.woocommerce-product-gallery__image > a')
+               .map((i, a) => $(a).attr("href").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -226,7 +234,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/fartakDesign");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -313,7 +321,6 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
      let urlExists;
 
      do {
-         
           urlExists = await existsUrl();
           if(urlExists){
                await run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory);

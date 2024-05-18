@@ -9,7 +9,7 @@ services:
     ports:
       - "4011:4008"
     volumes:
-      - ./-----:/usr/src/app/-----
+      - ./fartakDesign:/usr/src/app/fartakDesign
     networks:
       - custom_network
 

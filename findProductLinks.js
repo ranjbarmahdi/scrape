@@ -48,7 +48,7 @@ async function findAllMainLinks(page, initialUrl) {
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -75,29 +75,21 @@ async function findAllPagesLinks(page, mainLinks) {
             const html = await page.content();
             const $ = cheerio.load(html);
 
-            // find last page number and preduce other pages urls
-            const paginationElement = $('notFound');
-            console.log("Pagination Element : ", paginationElement.length);
-            if (paginationElement.length) {
+            let lsatPageNumber = 655
+            console.log("Last Page Number : ", lsatPageNumber);
+            lsatPageNumber = Number(lsatPageNumber);
+            for (let j = 160; j <= lsatPageNumber; j++) {
+                const newUrl = url + `/page/${j}/`
+                allPagesLinks.push(newUrl)
+            }
 
-                let lsatPageNumber = $('notFound')?.last().text()?.trim();
-                console.log("Last Page Number : ", lsatPageNumber);
-                lsatPageNumber = Number(lsatPageNumber);
-                for (let j = 1; j <= lsatPageNumber; j++) {
-                    const newUrl = url + `?page=${j}`
-                    allPagesLinks.push(newUrl)
-                }
-            }
-            else {
-                allPagesLinks.push(url)
-            }
 
         } catch (error) {
             console.log("Error in findAllPagesLinks", error);
         }
     }
 
-    allPagesLinks = shuffleArray(allPagesLinks)
+    // allPagesLinks = shuffleArray(allPagesLinks)
     return Array.from(new Set(allPagesLinks))
 }
 
@@ -125,7 +117,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('.woopack-product-title > a')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -159,7 +151,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://www.fartakdesign.com/online-shop']
 
         // get random proxy
         const proxyList = [''];
@@ -176,8 +168,8 @@ async function main() {
 
         for (const u of INITIAL_PAGE_URL) {
             const mainLinks = await findAllMainLinks(page, u)
-            // const AllPagesLinks = await findAllPagesLinks(page, mainLinks);
-            await findAllProductsLinks(page, mainLinks);
+            const AllPagesLinks = await findAllPagesLinks(page, mainLinks);
+            await findAllProductsLinks(page, AllPagesLinks);
         }
 
         // Close page and browser
