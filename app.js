@@ -125,40 +125,40 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1.product_title').length ? $('h1.product_title').text().trim() : "";
+          data["category"] = $('a.breadcrumb-link.breadcrumb-link-last').last().length
+               ? $('a.breadcrumb-link.breadcrumb-link-last').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
           data["brand"] = $('notFound').text()?.trim() || '';
 
           data['unitOfMeasurement'] = 'عدد'
-          data["price"] = "";
-          data["xpath"] = "";
+          data["price"] = $('p.price > ins:first').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+          data["xpath"] = "/html/body/div[1]/div[2]/div/div/div/div[3]/div[1]/div[2]/div/div/div[2]/div/p/ins/span/bdi/text()";
 
-          const offPercent = $('notFound').get()
-          if (offPercent.length) {
-               data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-               data["xpath"] = "";
+          const offPercent = $('p.price > del').get()
+          if (!offPercent.length) {
+               data["price"] = $('p.price .woocommerce-Price-amount.amount > bdi:first').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[1]/div[2]/div/div/div/div[3]/div[1]/div[2]/div/div/div[2]/div/p/span/span/bdi/text()';
           }
-          else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
-          }
+
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('table.shop_attributes tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
                const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+               const value = $(row).find('> td').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
                specification[key] = value;
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
+          if('برند' in specification){
+               data['brand'] = specification['برند']
+          }
           // descriptionString
           const descriptionString = $('notFound')
                .map((i, e) => $(e).text()?.trim())
@@ -169,8 +169,14 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          const regex = /(\.(jpg|jpeg|png|gif|bmp|webp|tiff|svg))(\?.*)?$/i;
+          let imagesUrls = $('.product-image-wrap > figure img') 
+               .map((i, img) => $(img).attr("src")?.replace(regex, '')?.replace(/(-[0-9]+x[0-9]+)/g, "")?.trim()).get();
+
+          const other = $('.product-image-thumbnail > img') 
+          .map((i, img) => $(img).attr("src")?.replace(regex, '')?.replace(/(-[0-9]+x[0-9]+)/g, "")?.trim()).get();    
+          imagesUrls.push(...other)
+          console.log("images:",imagesUrls)
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -226,7 +232,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/hashem");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -235,6 +241,9 @@ async function main() {
           if (!fs.existsSync(DATA_DIR)) { fs.mkdirSync(DATA_DIR); }
           if (!fs.existsSync(DOCUMENTS_DIR)) { fs.mkdirSync(DOCUMENTS_DIR); }
           if (!fs.existsSync(IMAGES_DIR)) { fs.mkdirSync(IMAGES_DIR); }
+
+          const random = Math.random()*2000;
+          await delay(random);
 
           // get product page url from db
           urlRow = await removeUrl();
@@ -286,7 +295,8 @@ async function main() {
           console.log("End");
           if(page) await page.close();
           if(browser) await browser.close();
-          await delay(1000);
+          const random = Math.random()*1000;
+          await delay(random);
      }
 }
 

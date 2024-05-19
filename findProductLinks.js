@@ -84,8 +84,8 @@ async function findAllPagesLinks(page, mainLinks) {
 
             // find last page number and preduce other pages urls
 
-            for (let j = 1; j <= 100; j++) {
-                const newUrl = url + `/page/${j}/`
+            for (let j = 1; j <= 5; j++) {
+                const newUrl = `https://banihashemst.com/product-category/%D9%85%D8%AD%D8%B5%D9%88%D9%84%D8%A7%D8%AA-%D8%AC%D8%A7%D9%86%D8%A8%DB%8C/page/${j}/?per_page=72`
                 allPagesLinks.push(newUrl)
             }
 
@@ -132,7 +132,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                     try {
                         const url = productsUrls[j];
                         await insertUrl(url);
-                        await delay(250);
+                        await delay(100);
                     } catch (error) {
                         console.log("Error in findAllProductsLinks for loop:", error.message);
                     }
