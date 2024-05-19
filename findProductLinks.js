@@ -44,8 +44,15 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        // const mainLinks = $('#menu-categories > li > a')
+        //     .map((i, a) => $(a).attr('href')?.trim()).get()
+
+        const mainLinks = [
+                "https://banihashemst.com/product-category/%d8%b4%db%8c%d8%b1%d8%a2%d9%84%d8%a7%d8%aa-%d8%b3%d8%a7%d8%ae%d8%aa%d9%85%d8%a7%d9%86%db%8c/",
+                // "https://banihashemst.com/product-category/%d8%aa%d8%ac%d9%87%db%8c%d8%b2%d8%a7%d8%aa-%d8%a2%d8%b4%d9%be%d8%b2%d8%ae%d8%a7%d9%86%d9%87/",
+                // "https://banihashemst.com/product-category/%d8%b3%d8%b1%d9%88%db%8c%d8%b3-%d8%a8%d9%87%d8%af%d8%a7%d8%b4%d8%aa%db%8c/",
+                // "https://banihashemst.com/product-category/%d9%85%d8%ad%d8%b5%d9%88%d9%84%d8%a7%d8%aa-%d8%ac%d8%a7%d9%86%d8%a8%db%8c/"
+            ]
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -76,28 +83,19 @@ async function findAllPagesLinks(page, mainLinks) {
             const $ = cheerio.load(html);
 
             // find last page number and preduce other pages urls
-            const paginationElement = $('notFound');
-            console.log("Pagination Element : ", paginationElement.length);
-            if (paginationElement.length) {
 
-                let lsatPageNumber = $('notFound')?.last().text()?.trim();
-                console.log("Last Page Number : ", lsatPageNumber);
-                lsatPageNumber = Number(lsatPageNumber);
-                for (let j = 1; j <= lsatPageNumber; j++) {
-                    const newUrl = url + `?page=${j}`
-                    allPagesLinks.push(newUrl)
-                }
+            for (let j = 1; j <= 100; j++) {
+                const newUrl = url + `/page/${j}/`
+                allPagesLinks.push(newUrl)
             }
-            else {
-                allPagesLinks.push(url)
-            }
+
 
         } catch (error) {
             console.log("Error in findAllPagesLinks", error);
         }
     }
 
-    allPagesLinks = shuffleArray(allPagesLinks)
+    // allPagesLinks = shuffleArray(allPagesLinks)
     return Array.from(new Set(allPagesLinks))
 }
 
@@ -114,7 +112,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 
             // sleep 5 second when switching between pages
             console.log("-------sleep 5 second");
-            await delay(5000);
+            await delay(3000);
 
             let nextPageBtn;
             let c = 0;
@@ -125,7 +123,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('.wd-entities-title > a')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -141,12 +139,13 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 }
 
 
-                nextPageBtn = await page.$$('notFound')
+                // nextPageBtn = await page.$$('a.next.page-numbers')
+                nextPageBtn = await page.$$('nnnnnnnnnnnn')
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
                 }
-                await delay(3000);
+                // await delay(3500);
             }
             while (nextPageBtn.length)
         } catch (error) {
@@ -159,7 +158,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://banihashemst.com/']
 
         // get random proxy
         const proxyList = [''];
@@ -176,8 +175,8 @@ async function main() {
 
         for (const u of INITIAL_PAGE_URL) {
             const mainLinks = await findAllMainLinks(page, u)
-            // const AllPagesLinks = await findAllPagesLinks(page, mainLinks);
-            await findAllProductsLinks(page, mainLinks);
+            const AllPagesLinks = await findAllPagesLinks(page, mainLinks);
+            await findAllProductsLinks(page, AllPagesLinks);
         }
 
         // Close page and browser
