@@ -294,7 +294,8 @@ async function main() {
           console.log("End");
           if(page) await page.close();
           if(browser) await browser.close();
-          await delay(1000);
+          const random = Math.random()*2000
+          await delay(random);
      }
 }
 
@@ -364,5 +365,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 // job.start()
 
 
-main();
+run_2(80, 80, 12)
 
