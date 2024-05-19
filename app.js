@@ -125,9 +125,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1.product_title').length ? $('h1.product_title').text().trim() : "";
+          data["category"] = $('.woocommerce-breadcrumb > a.breadcrumb-link-last').last().length
+               ? $('.woocommerce-breadcrumb > a.breadcrumb-link-last').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
@@ -143,13 +143,13 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                data["xpath"] = "";
           }
           else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
+               data["price"] = $('body > div.website-wrapper > div.main-page-wrapper > div > div > div > section.wd-negative-gap.elementor-section.elementor-top-section.elementor-element.elementor-element-f2f3bd2.elementor-hidden-desktop.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default.wd-section-disabled > div > div.elementor-column.elementor-col-50.elementor-top-column.elementor-element.elementor-element-d0937de > div > section.wd-negative-gap.elementor-section.elementor-inner-section.elementor-element.elementor-element-d629fbf.elementor-section-boxed.elementor-section-height-default.elementor-section-height-default.wd-section-disabled > div > div > div > div.elementor-element.elementor-element-40a677d.elementor-widget-mobile__width-auto.elementor-widget.elementor-widget-woocommerce-product-price > div > p > span > bdi').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[1]/div[1]/div/div/div/section[2]/div/div[2]/div/section[2]/div/div/div/div[1]/div/p/span/bdi/text()';
           }
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.shop_attributes tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
                const key = $(row).find('> th:first-child').text()?.trim()
@@ -159,18 +159,23 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
+          if('برند' in specification){
+               data['brand'] = specification['برند']
+          }
+
           // descriptionString
-          const descriptionString = $('notFound')
+          const descriptionString = $('#tab-description > div > p:lt(-2)')
                .map((i, e) => $(e).text()?.trim())
                .get()
+               .filter(text => text?.trim())
                .join('/n');
 
           // Generate uuidv4
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('.elementor-gallery__container > a:first')
+               .map((i, a) => $(a).attr("href").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -226,7 +231,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/roshashop");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
