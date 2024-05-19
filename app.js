@@ -176,6 +176,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const other = $('.product-image-thumbnail > img') 
           .map((i, img) => $(img).attr("src")?.replace(regex, '')?.replace(/(-[0-9]+x[0-9]+)/g, "")?.trim()).get();    
           imagesUrls.push(...other)
+          
           console.log("images:",imagesUrls)
 
           imagesUrls = Array.from(new Set(imagesUrls));
