@@ -44,8 +44,12 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = [
+            'https://azarakhshdecor.com/cat/%d8%af%db%8c%d9%88%d8%a7%d8%b1-%d9%be%d9%88%d8%b4/',
+            'https://azarakhshdecor.com/cat/%d8%af%db%8c%d9%88%d8%a7%d8%b1-%d9%be%d9%88%d8%b4/%d8%aa%d8%b1%d9%85%d9%88%d9%88%d8%a7%d9%84/',
+            'https://azarakhshdecor.com/cat/%d9%85%d9%88%da%a9%d8%aa-%d8%a7%d8%af%d8%a7%d8%b1%db%8c/'
+        ]
+
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -76,28 +80,17 @@ async function findAllPagesLinks(page, mainLinks) {
             const $ = cheerio.load(html);
 
             // find last page number and preduce other pages urls
-            const paginationElement = $('notFound');
-            console.log("Pagination Element : ", paginationElement.length);
-            if (paginationElement.length) {
-
-                let lsatPageNumber = $('notFound')?.last().text()?.trim();
-                console.log("Last Page Number : ", lsatPageNumber);
-                lsatPageNumber = Number(lsatPageNumber);
-                for (let j = 1; j <= lsatPageNumber; j++) {
-                    const newUrl = url + `?page=${j}`
-                    allPagesLinks.push(newUrl)
-                }
+            for (let j = 1; j <= 22; j++) {
+                const newUrl = 'https://azarakhshdecor.com/tag/%da%a9%d8%a7%d8%ba%d8%b0-%d8%af%db%8c%d9%88%d8%a7%d8%b1%db%8c-%d8%a7%d8%aa%d8%a7%d9%82-%d8%ae%d9%88%d8%a7%d8%a8' + `/page/${j}/`
+                allPagesLinks.push(newUrl)
             }
-            else {
-                allPagesLinks.push(url)
-            }
+    
 
         } catch (error) {
             console.log("Error in findAllPagesLinks", error);
         }
     }
 
-    allPagesLinks = shuffleArray(allPagesLinks)
     return Array.from(new Set(allPagesLinks))
 }
 
@@ -117,38 +110,39 @@ async function findAllProductsLinks(page, allPagesLinks) {
             await delay(5000);
 
             let nextPageBtn;
-            let c = 0;
             do {
-                c++;
-                console.log(c);
-                const html = await page.content();
-                const $ = cheerio.load(html);
-
-                // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
-
-                // insert prooduct links to unvisited
-                for (let j = 0; j < productsUrls.length; j++) {
-                    try {
-                        const url = productsUrls[j];
-                        await insertUrl(url);
-                        await delay(250);
-                    } catch (error) {
-                        console.log("Error in findAllProductsLinks for loop:", error.message);
+                try {
+                    nextPageBtn = await page.$$('.ctis-load-more > button')
+                    if (nextPageBtn.length) {
+                        let btn = nextPageBtn[0];
+                        await btn.click();
                     }
+                    await delay(5000);
+                } catch (error) {
+                    console.log("Not More Clickable");
+                    break;
                 }
-
-
-                nextPageBtn = await page.$$('notFound')
-                if (nextPageBtn.length) {
-                    let btn = nextPageBtn[0];
-                    await btn.click();
-                }
-                await delay(3000);
             }
             while (nextPageBtn.length)
+
+            const html = await page.content();
+            const $ = cheerio.load(html);
+
+            // Getting All Products Urls In This Page
+            const productsUrls = $('.woocommerce-loop-product__link')
+                .map((i, e) => $(e).attr('href'))
+                .get()
+
+            // insert prooduct links to unvisited
+            for (let j = 0; j < productsUrls.length; j++) {
+                try {
+                    const url = productsUrls[j];
+                    await insertUrl(url);
+                    await delay(150);
+                } catch (error) {
+                    console.log("Error in findAllProductsLinks for loop:", error.message);
+                }
+            }
         } catch (error) {
             console.log("Error In findAllProductsLinks function", error);
         }
@@ -159,14 +153,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://azarakhshdecor.com/']
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,

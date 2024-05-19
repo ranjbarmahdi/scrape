@@ -125,9 +125,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1.product-title').length ? $('h1.product-title').text().trim() : "";
+          data["category"] = $('#breadcrumbs > span > span:nth-child(3) > a').last().length
+               ? $('#breadcrumbs > span > span:nth-child(3) > a').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
@@ -137,19 +137,19 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           data["price"] = "";
           data["xpath"] = "";
 
-          const offPercent = $('notFound').get()
+          const offPercent = $('.price > del > .woocommerce-Price-amount').get()
           if (offPercent.length) {
-               data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-               data["xpath"] = "";
+               data["price"] = $('.price > ins').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[3]/div/div[3]/div[3]/div/div[1]/div[2]/div[2]/p/ins/span/bdi/text()';
           }
           else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
+               data["price"] = $('.price > ins').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[3]/div/div[3]/div[3]/div/div[1]/div[2]/div[2]/p/ins/span/bdi/text()';
           }
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('table.shop_attributes > tbody > tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
                const key = $(row).find('> th:first-child').text()?.trim()
@@ -158,6 +158,13 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
+
+          if('برند' in specification) {
+               data['brand'] = specification['برند']
+          }
+          else{
+               data['brand'] = 'متفرقه'
+          }
 
           // descriptionString
           const descriptionString = $('notFound')
@@ -169,7 +176,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('.product-img')
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -226,7 +233,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/azarakhshDecor");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 

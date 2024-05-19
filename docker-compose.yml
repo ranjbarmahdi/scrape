@@ -9,69 +9,69 @@ services:
     ports:
       - "4011:4008"
     volumes:
-      - ./-----:/usr/src/app/-----
+      - ./azarakhshDecor:/usr/src/app/azarakhshDecor
     networks:
       - custom_network
 
-  # node-app-2:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4012:4008"
-  #   volumes:
-  #     - ./-----:/usr/src/app/-----
-  #   networks:
-  #     - custom_network
+  node-app-2:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4012:4008"
+    volumes:
+      - ./azarakhshDecor:/usr/src/app/azarakhshDecor
+    networks:
+      - custom_network
 
-  # node-app-3:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4013:4008"
-  #   volumes:
-  #     - ./-----:/usr/src/app/-----
-  #   networks:
-  #     - custom_network
+  node-app-3:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4013:4008"
+    volumes:
+      - ./azarakhshDecor:/usr/src/app/azarakhshDecor
+    networks:
+      - custom_network
 
-  # node-app-4:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4014:4008"
-  #   volumes:
-  #     - ./-----:/usr/src/app/-----
-  #   networks:
-  #     - custom_network
+  node-app-4:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4014:4008"
+    volumes:
+      - ./azarakhshDecor:/usr/src/app/azarakhshDecor
+    networks:
+      - custom_network
 
-  # node-app-5:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4015:4008"
-  #   volumes:
-  #     - ./-----:/usr/src/app/-----
-  #   networks:
-  #     - custom_network
+  node-app-5:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4015:4008"
+    volumes:
+      - ./azarakhshDecor:/usr/src/app/azarakhshDecor
+    networks:
+      - custom_network
 
-  # node-app-6:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4016:4008"
-  #   volumes:
-  #     - ./-----:/usr/src/app/-----
-  #   networks:
-  #     - custom_network
+  node-app-6:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4016:4008"
+    volumes:
+      - ./azarakhshDecor:/usr/src/app/azarakhshDecor
+    networks:
+      - custom_network
 
   # node-app-7:
   #   user: root
