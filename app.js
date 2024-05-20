@@ -118,7 +118,7 @@ async function insertUrlToVisited(url) {
 async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, rowNumber = 1) {
      try {
           console.log(`======================== Start scraping : \n${productURL}\n`);
-          await page.goto(productURL, { timeout: 180000 });
+          await page.goto(productURL, { timeout: 360000 });
 
           await delay(5000);
 
