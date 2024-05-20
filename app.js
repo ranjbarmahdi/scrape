@@ -113,6 +113,7 @@ async function insertUrlToVisited(url) {
 }
 
 
+
 // ============================================ scrapSingleProduct
 async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, rowNumber = 1) {
      try {
@@ -169,15 +170,13 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          const regex = /(\.(jpg|jpeg|png|gif|bmp|webp|tiff|svg))(\?.*)?$/i;
-          let imagesUrls = $('.product-image-wrap > figure img') 
-               .map((i, img) => $(img).attr("src")?.replace(regex, '')?.replace(/(-[0-9]+x[0-9]+)/g, "")?.trim()).get();
-
-          const other = $('.product-image-thumbnail > img') 
-          .map((i, img) => $(img).attr("src")?.replace(regex, '')?.replace(/(-[0-9]+x[0-9]+)/g, "")?.trim()).get();    
-          imagesUrls.push(...other)
+          // const regex = /(\.(jpg|jpeg|png|gif|bmp|webp|tiff|svg))(\?.*)?$/i;
+          let imagesUrls = []
+          // const other = $('.product-image-thumbnail > img') 
+          // .map((i, img) => $(img).attr("src")?.replace(regex, '')?.replace(/(-[0-9]+x[0-9]+)/g, "")?.trim()).get();    
+          // imagesUrls.push(...other)
           
-          console.log("images:",imagesUrls)
+          // console.log("images:",imagesUrls)
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -227,6 +226,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 }
 
 
+
+ 
 // ============================================ Main
 async function main() {
      let urlRow;
