@@ -124,93 +124,124 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const html = await page.content();
           const $ = await cheerio.load(html);
 
-          const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
-                    .map((i, a) => $(a).text().trim()).get().join(" > ")
-               : "";
-
-          data["brand"] = $('notFound').text()?.trim() || '';
-
-          data['unitOfMeasurement'] = 'عدد'
-          data["price"] = "";
-          data["xpath"] = "";
-
-          const offPercent = $('notFound').get()
-          if (offPercent.length) {
-               data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-               data["xpath"] = "";
-          }
-          else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
-          }
-
-          // specification, specificationString
-          let specification = {};
-          const rowElements = $('notFound')
-          for (let i = 0; i < rowElements.length; i++) {
-               const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
-               specification[key] = value;
-          }
-          specification = omitEmpty(specification);
-          const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
-
-          // descriptionString
-          const descriptionString = $('notFound')
+          const headers = $('table.table-product')
+               .find('> thead > tr > *')
                .map((i, e) => $(e).text()?.trim())
-               .get()
-               .join('/n');
+               .get() || [];
 
-          // Generate uuidv4
-          const uuid = uuidv4().replace(/-/g, "");
-
-          // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
-
-          imagesUrls = Array.from(new Set(imagesUrls));
-          await downloadImages(imagesUrls, imagesDIR, uuid)
-
-
-          // download pdfs
-          let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
-          pdfUrls = Array.from(new Set(pdfUrls))
-          for (let i = 0; i < pdfUrls.length; i++) {
-               try {
-                    const pdfUrl = imagesUrls[i];
-                    const response = await fetch(pdfUrl);
-                    if (response.ok) {
-                         const buffer = await response.buffer();
-                         const localFileName = `${uuid}-${i + 1}.pdf`;
-                         const documentDir = path.normalize(documentsDir + "/" + localFileName);
-                         fs.writeFileSync(documentDir, buffer);
-                    }
-               } catch (error) {
-                    console.log("Error In Download Documents", error);
+          const indexSpec = headers.findIndex(item => item?.includes('جزئیات'));
+          const prosuctRows = $('table.table-product').find('> tbody > tr').get();
+          
+          if(indexSpec != -1){
+               headers.splice(indexSpec, indexSpec+1);
+          }
+          const indexName = headers.findIndex(item => {
+               if(item?.includes('نام') ||  item?.includes('عنوان') || item?.includes('نام')){
+                    return true
                }
+          });
+
+          for(const productRow of prosuctRows){
+               try {
+                    const tds = $(productRow).find('>td').get()
+                    if(indexSpec != -1){
+                         tds.splice(indexSpec, indexSpec+1);
+                    }
+                    const data = {};
+                    data["title"] = $(tds[indexName]).text().trim()
+                    data["category"] = $('.breadcrumb > li:lt(-1):last').last().length
+                         ? $('.breadcrumb > li:lt(-1):last').last()
+                              .map((i, a) => $(a).text().trim()).get().join(" > ")
+                         : "";
+          
+                    data["brand"] = $('.shop-title > div > h2').map((i, e) => {
+                         if($(e).text().includes('برند')) {
+                             return $(e).text().split(':')[1]?.trim()
+                         }
+                     }).get()[0] || ''
+          
+                    data['unitOfMeasurement'] = 'عدد'
+                    data["price"] = "";
+                    data["xpath"] = "";
+          
+                    const offPercent = $('notFound').get()
+                    if (offPercent.length) {
+                         data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+                         data["xpath"] = "";
+                    }
+                    else {
+                         data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+                         data["xpath"] = '';
+                    }
+          
+                    // specification, specificationString
+                    let specification = {};
+                    for (let i = 0; i < tds.length; i++) {
+                         const td = tds[i];
+                         const key = headers[i]?.trim();
+                         const value = $(td)?.text()?.trim();
+                         specification[key] = value;
+                    }
+                    specification = omitEmpty(specification);
+                    const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
+          
+                    // descriptionString
+                    const descriptionString = $('#product-des p')
+                         .map((i, e) => $(e).text()?.trim())
+                         .get()
+                         .filter(p => p?.trim())
+                         .join('/n');
+          
+                    // Generate uuidv4
+                    const uuid = uuidv4().replace(/-/g, "");
+          
+                    // Download Images
+                    let imagesUrls = $('.product-image img' )
+                         .map((i, img) => 'https://tpciran.com' + $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")?.replace('thumb2', 'thumb')?.replace('thumb', 'thumb2')).get();
+          
+                    imagesUrls = imagesUrls.map(url => url.includes('?v') ? url.split('?')[0] : url) 
+                    imagesUrls = Array.from(new Set(imagesUrls));
+                    await downloadImages(imagesUrls, imagesDIR, uuid)
+          
+                    // Returning Tehe Required Data For Excel
+                    const productExcelDataObject = {
+                         URL: productURL,
+                         xpath: data["xpath"],
+                         specifications: specificationString,
+                         description: descriptionString,
+                         price: data["price"],
+                         unitOfMeasurement: data['unitOfMeasurement'],
+                         category: data["category"],
+                         brand: data["brand"],
+                         SKU: uuid,
+                         name: data["title"],
+                         row: rowNumber
+                    };
+     
+                    const insertQueryInput = [
+                         productExcelDataObject.URL,
+                         productExcelDataObject.xpath,
+                         productExcelDataObject.specifications,
+                         productExcelDataObject.description,
+                         productExcelDataObject.price,
+                         productExcelDataObject.unitOfMeasurement,
+                         productExcelDataObject.category,
+                         productExcelDataObject.brand,
+                         productExcelDataObject.SKU,
+                         productExcelDataObject.name,
+                         productExcelDataObject.row
+                    ];
+     
+     
+                    await insertProduct(insertQueryInput);
+                    await delay(200)
+               } catch (error) {
+                    
+               }
+
           }
 
-
-          // Returning Tehe Required Data For Excel
-          const productExcelDataObject = {
-               URL: productURL,
-               xpath: data["xpath"],
-               specifications: specificationString,
-               description: descriptionString,
-               price: data["price"],
-               unitOfMeasurement: data['unitOfMeasurement'],
-               category: data["category"],
-               brand: data["brand"],
-               SKU: uuid,
-               name: data["title"],
-               row: rowNumber
-          };
-
-          return productExcelDataObject;
+          return '';
      } catch (error) {
           console.log("Error In scrapSingleProduct in page.goto", error);
           await insertUrlToProblem(productURL);
@@ -226,7 +257,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/tabarestan");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -253,26 +284,10 @@ async function main() {
                     height: 1080,
                });
                
-               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
-               const insertQueryInput = [
-                    productInfo.URL,
-                    productInfo.xpath,
-                    productInfo.specifications,
-                    productInfo.description,
-                    productInfo.price,
-                    productInfo.unitOfMeasurement,
-                    productInfo.category,
-                    productInfo.brand,
-                    productInfo.SKU,
-                    productInfo.name,
-                    productInfo.row
-               ];
+               await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
 
-               // if exists productInfo insert it to products
-               if (productInfo) {
-                    await insertProduct(insertQueryInput);
-                    await insertUrlToVisited(urlRow?.url);
-               }
+               await insertUrlToVisited(urlRow?.url);
+               
 
           }
 
@@ -356,5 +371,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 // job.start()
 
 
-main();
 
+run_2(80, 80, 12)

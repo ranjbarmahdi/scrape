@@ -48,7 +48,7 @@ async function findAllMainLinks(page, initialUrl) {
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -125,10 +125,44 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = [
+                    "https://tpciran.com/product/horizontal-tank",
+                    "https://tpciran.com/product/vertical-tanks",
+                    "https://tpciran.com/product/cubic-tanks",
+                    "https://tpciran.com/product/doorway-tanks",
+                    "https://tpciran.com/product/tanks-under-stairs",
+                    "https://tpciran.com/product/oval-tanks",
+                    "https://tpciran.com/product/nissan-tanks",
+                    "https://tpciran.com/product/expansion-tanks",
+                    "https://tpciran.com/product/funnel-tanks",
+                    "https://tpciran.com/product/sprayer-tanks",
+                    "https://tpciran.com/product/bath",
+                    "https://tpciran.com/product/ibc-tanks",
+                    "https://tpciran.com/product/chlorination-tanks",
+                    "https://tpciran.com/product/floating-buoy",
+                    "https://tpciran.com/product/under-the-truck-tank",
+                    "https://tpciran.com/product/محصولات-دیگر",
+                    "https://tpciran.com/product/صندلی",
+                    "https://tpciran.com/product/کانتر",
+                    "https://tpciran.com/product/اعداد",
+                    "https://tpciran.com/product/المان-شهری",
+                    "https://tpciran.com/product/میز",
+                    "https://tpciran.com/product/باکس",
+                    "https://tpciran.com/product/fountain",
+                    "https://tpciran.com/product/flower-pot",
+                    "https://tpciran.com/product/horizontal-tank-souma",
+                    "https://tpciran.com/product/vertical-tanks-souma",
+                    "https://tpciran.com/product/the-chair",
+                    "https://tpciran.com/product/lampshade",
+                    "https://tpciran.com/product/table",
+                    "https://tpciran.com/product/baby-pool",
+                    "https://tpciran.com/product/traffic-table",
+                    "https://tpciran.com/product/citic-tanks",
+                    "https://tpciran.com/product/packaging-barrels",
+                    "https://tpciran.com/product/floating-pier"
+                ]
 
+                
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
                     try {
@@ -159,7 +193,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://tpciran.com/']
 
         // get random proxy
         const proxyList = [''];
