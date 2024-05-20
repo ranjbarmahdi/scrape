@@ -119,98 +119,146 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           console.log(`======================== Start scraping : \n${productURL}\n`);
           await page.goto(productURL, { timeout: 180000 });
 
-          await delay(5000);
+          await delay(3000);
 
           const html = await page.content();
           const $ = await cheerio.load(html);
 
-          const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
-                    .map((i, a) => $(a).text().trim()).get().join(" > ")
-               : "";
-
-          data["brand"] = $('notFound').text()?.trim() || '';
-
-          data['unitOfMeasurement'] = 'عدد'
-          data["price"] = "";
-          data["xpath"] = "";
-
-          const offPercent = $('notFound').get()
-          if (offPercent.length) {
-               data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-               data["xpath"] = "";
-          }
-          else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
-          }
-
-          // specification, specificationString
-          let specification = {};
-          const rowElements = $('notFound')
-          for (let i = 0; i < rowElements.length; i++) {
-               const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
-               specification[key] = value;
-          }
-          specification = omitEmpty(specification);
-          const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
-
-          // descriptionString
-          const descriptionString = $('notFound')
-               .map((i, e) => $(e).text()?.trim())
-               .get()
-               .join('/n');
-
-          // Generate uuidv4
-          const uuid = uuidv4().replace(/-/g, "");
-
-          // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
-
-          imagesUrls = Array.from(new Set(imagesUrls));
-          await downloadImages(imagesUrls, imagesDIR, uuid)
-
-
-          // download pdfs
-          let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
-          pdfUrls = Array.from(new Set(pdfUrls))
-          for (let i = 0; i < pdfUrls.length; i++) {
-               try {
-                    const pdfUrl = imagesUrls[i];
-                    const response = await fetch(pdfUrl);
-                    if (response.ok) {
-                         const buffer = await response.buffer();
-                         const localFileName = `${uuid}-${i + 1}.pdf`;
-                         const documentDir = path.normalize(documentsDir + "/" + localFileName);
-                         fs.writeFileSync(documentDir, buffer);
+          const names = [];
+          const h3 = $('.cz_title.clr.cz_title_has_bg.cz_title_pos_center.tac.wpb_animate_when_almost_visible.fadeInDown.wpb_start_animation.animated .cz_wpe_content h3').get() || [];
+          if(h3.length){
+               const pText = $('.cz_title.clr.cz_title_has_bg.cz_title_pos_center.tac.wpb_animate_when_almost_visible.fadeInDown.wpb_start_animation.animated .cz_wpe_content p')
+                    ?.text()
+                    ?.replace('(', '')
+                    ?.replace(')', '')
+                    ?.trim()
+               if (pText.includes(',')){
+                    const varients = pText.split(',').map(t => t?.trim()).filter(t => t?.trim())
+                    for (const varient of varients){
+                         const name = `${$(h3[0]).text().trim()} ${varient}`;
+                         names.push(name)
                     }
-               } catch (error) {
-                    console.log("Error In Download Documents", error);
+               }
+               else{
+                    const name = `${$(h3[0]).text().trim()} ${pText}`
+                    names.push(name)
                }
           }
+          else{
+               const name = $('.cz_title.clr.cz_title_has_bg.cz_title_pos_center.tac.wpb_animate_when_almost_visible.fadeInDown.wpb_start_animation.animated .cz_wpe_content')
+                    ?.text()
+                    ?.trim()
+               names.push(name);
+          }
 
+          for(const name of names){
+               const data = {};
+               data["title"] = name;
+               data["category"] = $('notFound').last().length
+                    ? $('notFound').last()
+                         .map((i, a) => $(a).text().trim()).get().join(" > ")
+                    : "";
+     
+               data["brand"] = $('notFound').text()?.trim() || '';
+     
+               data['unitOfMeasurement'] = 'عدد'
+               data["price"] = "";
+               data["xpath"] = "";
+     
+               const offPercent = $('notFound').get()
+               if (offPercent.length) {
+                    data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+                    data["xpath"] = "";
+               }
+               else {
+                    data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+                    data["xpath"] = '';
+               }
+     
+               // specification, specificationString
+               let specification = {};
+               const rowElements = $('ul.cz_stylish_list.clr.cz_sl_icon_hover_zoom_in li > div > span')
+               for (let i = 0; i < rowElements.length; i++) {
+                    const row = rowElements[i];
+                    const rowText = $(row).text()?.trim();
+                    if(rowText.includes(':')){
+                         const key = rowText.split(':')[0]?.trim()
+                         const value = rowText.split(':')[1]?.trim()
+                         specification[key] = value;
+                    }
+               }
+               specification = omitEmpty(specification);
+               const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
+     
+               // descriptionString
+               const descriptionString = $('notFound')
+                    .map((i, e) => $(e).text()?.trim())
+                    .get()
+                    .join('/n');
+     
+               // Generate uuidv4
+               const uuid = uuidv4().replace(/-/g, "");
+     
+               // Download Images
+               let imagesUrls = $('.cz_main_image > img')
+                    .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+     
+               imagesUrls = Array.from(new Set(imagesUrls));
+               await downloadImages(imagesUrls, imagesDIR, uuid)
+     
+     
+               // download pdfs
+               let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
+               pdfUrls = Array.from(new Set(pdfUrls))
+               for (let i = 0; i < pdfUrls.length; i++) {
+                    try {
+                         const pdfUrl = imagesUrls[i];
+                         const response = await fetch(pdfUrl);
+                         if (response.ok) {
+                              const buffer = await response.buffer();
+                              const localFileName = `${uuid}-${i + 1}.pdf`;
+                              const documentDir = path.normalize(documentsDir + "/" + localFileName);
+                              fs.writeFileSync(documentDir, buffer);
+                         }
+                    } catch (error) {
+                         console.log("Error In Download Documents", error);
+                    }
+               }
+     
+     
+               // Returning Tehe Required Data For Excel
+               const productExcelDataObject = {
+                    URL: productURL,
+                    xpath: data["xpath"],
+                    specifications: specificationString,
+                    description: descriptionString,
+                    price: data["price"],
+                    unitOfMeasurement: data['unitOfMeasurement'],
+                    category: data["category"],
+                    brand: data["brand"],
+                    SKU: uuid,
+                    name: data["title"],
+                    row: rowNumber
+               };
 
-          // Returning Tehe Required Data For Excel
-          const productExcelDataObject = {
-               URL: productURL,
-               xpath: data["xpath"],
-               specifications: specificationString,
-               description: descriptionString,
-               price: data["price"],
-               unitOfMeasurement: data['unitOfMeasurement'],
-               category: data["category"],
-               brand: data["brand"],
-               SKU: uuid,
-               name: data["title"],
-               row: rowNumber
-          };
+               const insertQueryInput = [
+                    productExcelDataObject.URL,
+                    productExcelDataObject.xpath,
+                    productExcelDataObject.specifications,
+                    productExcelDataObject.description,
+                    productExcelDataObject.price,
+                    productExcelDataObject.unitOfMeasurement,
+                    productExcelDataObject.category,
+                    productExcelDataObject.brand,
+                    productExcelDataObject.SKU,
+                    productExcelDataObject.name,
+                    productExcelDataObject.row
+               ];
 
-          return productExcelDataObject;
+               await insertProduct(insertQueryInput);
+          }
+
+          return '';
      } catch (error) {
           console.log("Error In scrapSingleProduct in page.goto", error);
           await insertUrlToProblem(productURL);
@@ -226,7 +274,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/simia");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -253,26 +301,10 @@ async function main() {
                     height: 1080,
                });
                
-               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
-               const insertQueryInput = [
-                    productInfo.URL,
-                    productInfo.xpath,
-                    productInfo.specifications,
-                    productInfo.description,
-                    productInfo.price,
-                    productInfo.unitOfMeasurement,
-                    productInfo.category,
-                    productInfo.brand,
-                    productInfo.SKU,
-                    productInfo.name,
-                    productInfo.row
-               ];
+               await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
 
-               // if exists productInfo insert it to products
-               if (productInfo) {
-                    await insertProduct(insertQueryInput);
-                    await insertUrlToVisited(urlRow?.url);
-               }
+               await insertUrlToVisited(urlRow?.url);
+               
 
           }
 
@@ -356,5 +388,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 // job.start()
 
 
-main();
+run_2(80, 80, 12)
 
