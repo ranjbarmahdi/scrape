@@ -44,8 +44,9 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = [
+            'https://charsoo.com/product-category/%d9%84%d9%88%d8%a7%d8%b2%d9%85-%d8%a2%d8%b4%d9%be%d8%b2%d8%ae%d8%a7%d9%86%d9%87/'
+        ]
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -121,11 +122,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
             do {
                 c++;
                 console.log(c);
+
                 const html = await page.content();
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                // const productsUrlsElements = await page.$$('.products > div > div > a.title')
+
+                const productsUrls = $('.products > div > div > a.title')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -141,12 +145,12 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 }
 
 
-                nextPageBtn = await page.$$('notFound')
+                nextPageBtn = await page.$$('a.next.page-numbers')
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
                 }
-                await delay(3000);
+                await delay(5000);
             }
             while (nextPageBtn.length)
         } catch (error) {
@@ -159,14 +163,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://charsoo.com/']
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,

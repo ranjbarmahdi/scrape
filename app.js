@@ -125,9 +125,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1.title').length ? $('h1.title').text().trim() : "";
+          data["category"] = $('.woocommerce-breadcrumb > a').last().length
+               ? $('.woocommerce-breadcrumb > a').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
@@ -137,27 +137,31 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           data["price"] = "";
           data["xpath"] = "";
 
-          const offPercent = $('notFound').get()
+          const offPercent = $('p.price > del').get()
           if (offPercent.length) {
-               data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-               data["xpath"] = "";
+               data["price"] = $('p.price > ins').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+               data["xpath"] = "/html/body/div[1]/div/main/div[2]/div[1]/div[3]/div[3]/p/ins/span/bdi/text()";
           }
           else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
+               data["price"] = $('p.price > .woocommerce-Price-amount.amount > bdi').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[1]/div/main/div[2]/div[1]/div[3]/div[3]/p/span/bdi/text()';
           }
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.shop_attributes tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
                const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+               const value = $(row).find('> td').text()?.trim()?.split('\n')?.join('-')
                specification[key] = value;
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
+
+          if('برند' in specification){
+               data['brand'] = specification['برند'];
+          }
 
           // descriptionString
           const descriptionString = $('notFound')
@@ -169,7 +173,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('.woocommerce-product-gallery__wrapper img') 
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -226,7 +230,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/charsoo");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -236,6 +240,9 @@ async function main() {
           if (!fs.existsSync(DOCUMENTS_DIR)) { fs.mkdirSync(DOCUMENTS_DIR); }
           if (!fs.existsSync(IMAGES_DIR)) { fs.mkdirSync(IMAGES_DIR); }
 
+          const random = Math.random()*1500
+          await delay(random);
+          
           // get product page url from db
           urlRow = await removeUrl();
 
@@ -286,7 +293,8 @@ async function main() {
           console.log("End");
           if(page) await page.close();
           if(browser) await browser.close();
-          await delay(1000);
+          const random = Math.random()*1500
+          await delay(random);
      }
 }
 
