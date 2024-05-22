@@ -125,9 +125,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1.product_title').length ? $('h1.product_title').text().trim() : "";
+          data["category"] = $('a.breadcrumb-link breadcrumb-link-last').last().length
+               ? $('a.breadcrumb-link breadcrumb-link-last').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
@@ -226,7 +226,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/htn");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
