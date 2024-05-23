@@ -328,7 +328,7 @@ async function main() {
                     height: 1080,
                });
                
-               await scrapSingleProduct(page, 'https://htnprime.com/product/plate-handle-1700/', IMAGES_DIR, DOCUMENTS_DIR);
+               await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
                
                await insertUrlToVisited(urlRow?.url);
           }
