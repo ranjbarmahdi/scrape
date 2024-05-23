@@ -190,14 +190,14 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                data["price"] = "";
                data["xpath"] = "";
      
-               const offPercent = $('notFound').get()
-               if (offPercent.length) {
-                    data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-                    data["xpath"] = "";
+               const offPercent = $('p.price .woocommerce-Price-amount.amount').get()
+               if (offPercent.length >= 2) {
+                    data["price"] = $('p.price .woocommerce-Price-amount.amount').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+                    data["xpath"] = "/html/body/div[1]/div/div/div/div/div[3]/div[1]/div[2]/div/div/div[2]/div/p/span[1]/bdi/text()";
                }
                else {
-                    data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-                    data["xpath"] = '';
+                    data["price"] = $('p.price .woocommerce-Price-amount.amount').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+                    data["xpath"] = '/html/body/div[1]/div/div/div/div/div[3]/div[1]/div[2]/div/div/div[2]/div/p/span/span/bdi/text()';
                }
      
                // specification, specificationString
