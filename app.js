@@ -7,6 +7,7 @@ const db = require('./config.js');
 const path = require("path");
 const fs = require("fs");
 const os = require('os');
+const { CLIENT_RENEG_LIMIT } = require('tls');
 // const cron = require('node-cron');
 // const CronJob = require('cron').CronJob;
 
@@ -124,93 +125,167 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const html = await page.content();
           const $ = await cheerio.load(html);
 
-          const data = {};
-          data["title"] = $('h1.product_title').length ? $('h1.product_title').text().trim() : "";
-          data["category"] = $('a.breadcrumb-link breadcrumb-link-last').last().length
-               ? $('a.breadcrumb-link breadcrumb-link-last').last()
-                    .map((i, a) => $(a).text().trim()).get().join(" > ")
-               : "";
+          
+          const title = $('h1.product_title').length ? $('h1.product_title').text().trim() : "";
+          let names = [title];
+          
+          const colors = $('ul[data-attribute_name="attribute_pa_color"] > li')
+               .map((i, c) => $(c).attr('title')?.trim())
+               .get();
 
-          data["brand"] = $('notFound').text()?.trim() || '';
+          const sizes = $('ul[data-attribute_name="attribute_pa_size"] > li')
+               .map((i, c) => $(c).attr('title')?.trim())
+               .get();
 
-          data['unitOfMeasurement'] = 'عدد'
-          data["price"] = "";
-          data["xpath"] = "";
+          const usage = $('ul[data-attribute_name="attribute_pa_product-usage"] > li')
+               .map((i, c) => $(c).attr('title')?.trim())
+               .get();
 
-          const offPercent = $('notFound').get()
-          if (offPercent.length) {
-               data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+          if (sizes.length > 0) {
+               let newNames = [];
+               sizes.forEach(size => {
+                    names.forEach(name => {
+                         newNames.push(`${name} سایز ${size}`);
+                    });
+               });
+               // Clear the list of previous names and add the newly generated names
+               names = newNames;
+           }
+
+          if (colors.length > 0) {
+               let newNames = [];
+               colors.forEach(color => {
+                    names.forEach(name => {
+                         newNames.push(`${name} رنگ ${color}`);
+                    });
+               });
+               // Clear the list of previous names and add the newly generated names
+               names = newNames;
+          }
+
+
+          if (usage.length > 0) {
+               let newNames = [];
+               usage.forEach(u => {
+                    names.forEach(name => {
+                         newNames.push(`${name} (${u})`);
+                    });
+               });
+               // Clear the list of previous names and add the newly generated names
+               names = newNames;
+           }
+
+
+          for(const name of names){
+               const data = {};
+               data["title"] = name;
+               data["category"] = $('a.breadcrumb-link breadcrumb-link-last').last().length
+                    ? $('a.breadcrumb-link breadcrumb-link-last').last()
+                         .map((i, a) => $(a).text().trim()).get().join(" > ")
+                    : "";
+     
+               data["brand"] = $('ul[data-attribute_name="attribute_pa_brand"] > li:first').text()?.trim() || '';
+     
+               data['unitOfMeasurement'] = 'عدد'
+               data["price"] = "";
                data["xpath"] = "";
-          }
-          else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
-          }
-
-          // specification, specificationString
-          let specification = {};
-          const rowElements = $('notFound')
-          for (let i = 0; i < rowElements.length; i++) {
-               const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
-               specification[key] = value;
-          }
-          specification = omitEmpty(specification);
-          const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
-
-          // descriptionString
-          const descriptionString = $('notFound')
-               .map((i, e) => $(e).text()?.trim())
-               .get()
-               .join('/n');
-
-          // Generate uuidv4
-          const uuid = uuidv4().replace(/-/g, "");
-
-          // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
-
-          imagesUrls = Array.from(new Set(imagesUrls));
-          await downloadImages(imagesUrls, imagesDIR, uuid)
-
-
-          // download pdfs
-          let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
-          pdfUrls = Array.from(new Set(pdfUrls))
-          for (let i = 0; i < pdfUrls.length; i++) {
-               try {
-                    const pdfUrl = imagesUrls[i];
-                    const response = await fetch(pdfUrl);
-                    if (response.ok) {
-                         const buffer = await response.buffer();
-                         const localFileName = `${uuid}-${i + 1}.pdf`;
-                         const documentDir = path.normalize(documentsDir + "/" + localFileName);
-                         fs.writeFileSync(documentDir, buffer);
-                    }
-               } catch (error) {
-                    console.log("Error In Download Documents", error);
+     
+               const offPercent = $('notFound').get()
+               if (offPercent.length) {
+                    data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+                    data["xpath"] = "";
                }
-          }
+               else {
+                    data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+                    data["xpath"] = '';
+               }
+     
+               // specification, specificationString
+               let specification = {};
+               const rowElements = $('.woocommerce-product-details__short-description p')
+               for (let i = 0; i < rowElements.length; i++) {
+                    const row = rowElements[i];
+                    const rowString = $(row).text()?.trim();
+                    if(rowString.includes(':')){
+                         const key = rowString.split(':')[0]?.trim();
+                         const value = rowString.split(':')[1]?.trim();
+                         specification[key] = value;
+                    }
+               }
+               specification = omitEmpty(specification);
+               const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
+     
+               // descriptionString
+               const descriptionString = $('#tab-description > div > p')
+                    .map((i, e) => $(e).text()?.trim())
+                    .get()
+                    .filter(d => d?.trim())
+                    .join('/n');
+     
+               // Generate uuidv4
+               const uuid = uuidv4().replace(/-/g, "");
+     
+               // Download Images
+               let imagesUrls = $('.product-images-inner .woocommerce-product-gallery img') 
+                    .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+     
+               imagesUrls = Array.from(new Set(imagesUrls));
+               await downloadImages(imagesUrls, imagesDIR, uuid)
+     
+     
+               // download pdfs
+               let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
+               pdfUrls = Array.from(new Set(pdfUrls))
+               for (let i = 0; i < pdfUrls.length; i++) {
+                    try {
+                         const pdfUrl = imagesUrls[i];
+                         const response = await fetch(pdfUrl);
+                         if (response.ok) {
+                              const buffer = await response.buffer();
+                              const localFileName = `${uuid}-${i + 1}.pdf`;
+                              const documentDir = path.normalize(documentsDir + "/" + localFileName);
+                              fs.writeFileSync(documentDir, buffer);
+                         }
+                    } catch (error) {
+                         console.log("Error In Download Documents", error);
+                    }
+               }
+     
+               // Returning Tehe Required Data For Excel
+               const productExcelDataObject = {
+                    URL: productURL,
+                    xpath: data["xpath"],
+                    specifications: specificationString,
+                    description: descriptionString,
+                    price: data["price"],
+                    unitOfMeasurement: data['unitOfMeasurement'],
+                    category: data["category"],
+                    brand: data["brand"],
+                    SKU: uuid,
+                    name: data["title"],
+                    row: rowNumber
+               };
+     
+               const insertQueryInput = [
+                    productExcelDataObject.URL,
+                    productExcelDataObject.xpath,
+                    productExcelDataObject.specifications,
+                    productExcelDataObject.description,
+                    productExcelDataObject.price,
+                    productExcelDataObject.unitOfMeasurement,
+                    productExcelDataObject.category,
+                    productExcelDataObject.brand,
+                    productExcelDataObject.SKU,
+                    productExcelDataObject.name,
+                    productExcelDataObject.row
+               ];
+     
+               await insertProduct(insertQueryInput);
+               await delay(200)
+          } 
 
 
-          // Returning Tehe Required Data For Excel
-          const productExcelDataObject = {
-               URL: productURL,
-               xpath: data["xpath"],
-               specifications: specificationString,
-               description: descriptionString,
-               price: data["price"],
-               unitOfMeasurement: data['unitOfMeasurement'],
-               category: data["category"],
-               brand: data["brand"],
-               SKU: uuid,
-               name: data["title"],
-               row: rowNumber
-          };
-
-          return productExcelDataObject;
+          return '';
      } catch (error) {
           console.log("Error In scrapSingleProduct in page.goto", error);
           await insertUrlToProblem(productURL);
@@ -253,27 +328,9 @@ async function main() {
                     height: 1080,
                });
                
-               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
-               const insertQueryInput = [
-                    productInfo.URL,
-                    productInfo.xpath,
-                    productInfo.specifications,
-                    productInfo.description,
-                    productInfo.price,
-                    productInfo.unitOfMeasurement,
-                    productInfo.category,
-                    productInfo.brand,
-                    productInfo.SKU,
-                    productInfo.name,
-                    productInfo.row
-               ];
-
-               // if exists productInfo insert it to products
-               if (productInfo) {
-                    await insertProduct(insertQueryInput);
-                    await insertUrlToVisited(urlRow?.url);
-               }
-
+               await scrapSingleProduct(page, 'https://htnprime.com/product/plate-handle-1700/', IMAGES_DIR, DOCUMENTS_DIR);
+               
+               await insertUrlToVisited(urlRow?.url);
           }
 
      }
@@ -286,7 +343,7 @@ async function main() {
           console.log("End");
           if(page) await page.close();
           if(browser) await browser.close();
-          await delay(1000);
+          await delay(Math.random()*3000);
      }
 }
 
