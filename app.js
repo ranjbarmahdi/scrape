@@ -402,6 +402,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 
 // job.start()
 
-
-main();
+run_2(80, 80, 13)
 
