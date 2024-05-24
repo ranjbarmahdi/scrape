@@ -125,7 +125,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
+          data["title"] = $('h1.product_title').length ? $('h1.product_title ').text().trim() : "";
           data["category"] = $('notFound').last().length
                ? $('notFound').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
@@ -133,34 +133,38 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           data["brand"] = $('notFound').text()?.trim() || '';
 
-          data['unitOfMeasurement'] = 'عدد'
+          data['unitOfMeasurement'] = 'متر مربع'
           data["price"] = "";
           data["xpath"] = "";
 
-          const offPercent = $('notFound').get()
+          const offPercent = $('.oldprice').get()
           if (offPercent.length) {
-               data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-               data["xpath"] = "";
+               data["price"] = $('.finalprice').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+               data["xpath"] = "/html/body/div[2]/main/div[2]/div/div/div[2]/div[2]/div/div/div[2]/form/div[1]/p/span[3]/span/text()";
           }
           else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
+               data["price"] = $('.finalprice').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[2]/main/div[2]/div/div/div[2]/div[2]/div/div/div[2]/form/div[1]/p/span[2]/text()';
           }
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.shop_attributes tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+               const key = $(row).find('> th').text()?.trim()
+               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('-');
                specification[key] = value;
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
+          if('برند' in specification){
+               data['brand'] = specification['برند'];
+          }
+
           // descriptionString
-          const descriptionString = $('notFound')
+          const descriptionString = $('#tab-description > p')
                .map((i, e) => $(e).text()?.trim())
                .get()
                .join('/n');
@@ -169,7 +173,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('.images img')
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
