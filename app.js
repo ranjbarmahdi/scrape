@@ -125,8 +125,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
+          data["title"] = $('h1.product_title').length ? $('h1.product_title').text().trim() : "";
+          data["category"] = $('.woocommerce-breadcrumb > a').last().length
                ? $('notFound').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
@@ -143,22 +143,25 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                data["xpath"] = "";
           }
           else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
+               data["price"] = $('.woocommerce-Price-amount.amount > bdi').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[1]/div[2]/div/div[2]/div/section[2]/div/div[2]/div/section[1]/div/div[2]/div/div/div/div/a/span/span/ins/span/bdi/text()';
           }
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.shop_attributes tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
                const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('-');
                specification[key] = value;
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
+          if('برند کاغذدیواری' in specification){
+               data['brand'] = specification['برند کاغذدیواری']
+          }
           // descriptionString
           const descriptionString = $('notFound')
                .map((i, e) => $(e).text()?.trim())
@@ -169,7 +172,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('.woocommerce-product-gallery img') 
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -226,7 +229,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/newwall");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -286,7 +289,7 @@ async function main() {
           console.log("End");
           if(page) await page.close();
           if(browser) await browser.close();
-          await delay(1000);
+          await delay(Math.random()*3000);
      }
 }
 
