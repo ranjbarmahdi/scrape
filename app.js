@@ -174,10 +174,18 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('.elementor-gallery__container > a:first')
+          let imagesUrls = $('.elementor-gallery__container > a')
                .map((i, a) => $(a).attr("href").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
+          const others = $('a.e-gallery-item')
+               .map((i, a) => $(a).attr("href").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+
+          imagesUrls.push(...others);
+          
+          
           imagesUrls = Array.from(new Set(imagesUrls));
+          imagesUrls = imagesUrls.slice(0, 5);
+
           await downloadImages(imagesUrls, imagesDIR, uuid)
 
 
@@ -258,7 +266,7 @@ async function main() {
                     height: 1080,
                });
                
-               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
+               const productInfo = await scrapSingleProduct(page, 'https://roshashop.com/product/nazin-wallpaper/', IMAGES_DIR, DOCUMENTS_DIR);
                const insertQueryInput = [
                     productInfo.URL,
                     productInfo.xpath,
