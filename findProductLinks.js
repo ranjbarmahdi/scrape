@@ -44,11 +44,15 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = [
+            'https://boretti.ir/category656929',
+            'https://boretti.ir/category656928',
+            'https://boretti.ir/category656927',
+            'https://boretti.ir/category733972',
+        ]
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(initialUrl);
+        allMainLinks.push(...mainLinks);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -129,8 +133,8 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('.wd-entities-title > a')
-                    .map((i, e) => $(e).attr('href'))
+                const productsUrls = $('.c-listing__items.profiPdc > li > div > .c-product-box__content .c-product-box__title > a')
+                    .map((i, e) => 'https://boretti.ir' + $(e).attr('href'))
                     .get()
 
                 // insert prooduct links to unvisited
@@ -145,7 +149,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 }
 
 
-                nextPageBtn = await page.$$('notFound')
+                nextPageBtn = await page.$$('.c-pager__items.profiPg .js-pagination__item > .c-pager__next')
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
@@ -163,7 +167,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['https://htnprime.com/shop/']
+        const INITIAL_PAGE_URL = ['https://boretti.ir/']
 
         // get random proxy
         const proxyList = [''];
