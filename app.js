@@ -181,7 +181,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                .map((i, a) => $(a).attr("href").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           const others_2 = $('img.attachment-large.size-large')
-               .map((i, a) => $(a).attr("href").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+               .map((i, a) => $(a).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls.push(...others);
           imagesUrls.push(...others_2);
