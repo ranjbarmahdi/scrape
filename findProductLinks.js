@@ -146,7 +146,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                     let btn = nextPageBtn[0];
                     await btn.click();
                 }
-                await delay(10000);
+                await delay(20000);
             }
             while (nextPageBtn.length)
         } catch (error) {
