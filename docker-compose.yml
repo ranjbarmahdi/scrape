@@ -9,7 +9,7 @@ services:
     ports:
       - "4011:4008"
     volumes:
-      - ./htn:/usr/src/app/htn
+      - ./boretti:/usr/src/app/boretti
     networks:
       - custom_network
 
@@ -21,7 +21,7 @@ services:
     ports:
       - "4012:4008"
     volumes:
-      - ./htn:/usr/src/app/htn
+      - ./boretti:/usr/src/app/boretti
     networks:
       - custom_network
 
@@ -33,7 +33,7 @@ services:
     ports:
       - "4013:4008"
     volumes:
-      - ./htn:/usr/src/app/htn
+      - ./boretti:/usr/src/app/boretti
     networks:
       - custom_network
 
@@ -45,7 +45,7 @@ services:
     ports:
       - "4014:4008"
     volumes:
-      - ./htn:/usr/src/app/htn
+      - ./boretti:/usr/src/app/boretti
     networks:
       - custom_network
 
@@ -57,7 +57,7 @@ services:
     ports:
       - "4015:4008"
     volumes:
-      - ./htn:/usr/src/app/htn
+      - ./boretti:/usr/src/app/boretti
     networks:
       - custom_network
 

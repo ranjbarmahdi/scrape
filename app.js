@@ -114,6 +114,21 @@ async function insertUrlToVisited(url) {
 }
 
 
+function generateCombinations(arrays, prefix = []) {
+     if (!arrays.length) {
+         return [prefix];
+     }
+ 
+     const [first, ...rest] = arrays;
+     const result = [];
+ 
+     for (const value of first) {
+         result.push(...generateCombinations(rest, [...prefix, value]));
+     }
+ 
+     return result;
+ }
+
 // ============================================ scrapSingleProduct
 async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, rowNumber = 1) {
      try {
@@ -126,83 +141,58 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           
-          const title = $('h1.product_title').length ? $('h1.product_title').text().trim() : "";
-          let names = [title];
-          
-          const colors = $('ul[data-attribute_name="attribute_pa_color"] > li')
-               .map((i, c) => $(c).attr('title')?.trim())
-               .get();
-
-          const sizes = $('ul[data-attribute_name="attribute_pa_size"] > li')
-               .map((i, c) => $(c).attr('title')?.trim())
-               .get();
-
-          const usage = $('ul[data-attribute_name="attribute_pa_product-usage"] > li')
-               .map((i, c) => $(c).attr('title')?.trim())
-               .get();
-
-          if (sizes.length > 0) {
-               let newNames = [];
-               sizes.forEach(size => {
-                    names.forEach(name => {
-                         newNames.push(`${name} سایز ${size}`);
-                    });
-               });
-               // Clear the list of previous names and add the newly generated names
-               names = newNames;
-           }
-
-          if (colors.length > 0) {
-               let newNames = [];
-               colors.forEach(color => {
-                    names.forEach(name => {
-                         newNames.push(`${name} رنگ ${color}`);
-                    });
-               });
-               // Clear the list of previous names and add the newly generated names
-               names = newNames;
+          let title = $('.c-product__title').length ? $('.c-product__title').text().trim() : "";
+          const span = $('.c-product__title span').length ? $('.c-product__title span').text().trim() : "";
+          if(span){
+               title = title.replace(span, '');
           }
 
+          let names = [];
+          
+          const variants = $('.c-product__variants').get();
 
-          if (usage.length > 0) {
-               let newNames = [];
-               usage.forEach(u => {
-                    names.forEach(name => {
-                         newNames.push(`${name} (${u})`);
-                    });
-               });
-               // Clear the list of previous names and add the newly generated names
-               names = newNames;
-           }
+          // Extract variant values
+          const variantArrays = variants.map(variant => {
+               const liElements = $(variant).find('ul li').get();
+               return liElements.map(li => $(li).text()?.trim());
+          });
+          
+          // Generate all combinations of variants
+          const combinations = generateCombinations(variantArrays);
+          
+          // Append combinations to the title and push to the names array
+          for (const combination of combinations) {
+               names.push(`${title} ${combination.join(' ')}`);
+          }
 
-
+ 
           for(const name of names){
                const data = {};
                data["title"] = name;
-               data["category"] = $('a.breadcrumb-link breadcrumb-link-last').last().length
-                    ? $('a.breadcrumb-link breadcrumb-link-last').last()
+               data["category"] = $('.btn-link-spoiler:not(.product-brand-title)').last().length
+                    ? $('.btn-link-spoiler:not(.product-brand-title)').last()
                          .map((i, a) => $(a).text().trim()).get().join(" > ")
                     : "";
      
-               data["brand"] = $('ul[data-attribute_name="attribute_pa_brand"] > li:first').text()?.trim() || '';
+               data["brand"] = 'برتی';
      
                data['unitOfMeasurement'] = 'عدد'
                data["price"] = "";
                data["xpath"] = "";
      
-               const offPercent = $('p.price .woocommerce-Price-amount.amount').get()
+               const offPercent = $('notFound').get()
                if (offPercent.length >= 2) {
-                    data["price"] = $('p.price .woocommerce-Price-amount.amount').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-                    data["xpath"] = "/html/body/div[1]/div/div/div/div/div[3]/div[1]/div[2]/div/div/div[2]/div/p/span[1]/bdi/text()";
+                    data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+                    data["xpath"] = "";
                }
                else {
-                    data["price"] = $('p.price .woocommerce-Price-amount.amount').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-                    data["xpath"] = '/html/body/div[1]/div/div/div/div/div[3]/div[1]/div[2]/div/div/div[2]/div/p/span/span/bdi/text()';
+                    data["price"] = $('#variantPrice').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+                    data["xpath"] = '/html/body/main/div[2]/div/div/section/article/section[1]/div[2]/div[1]/div[4]/div[1]/span[1]/span/text()';
                }
      
                // specification, specificationString
                let specification = {};
-               const rowElements = $('.woocommerce-product-details__short-description p')
+               const rowElements = $('notFound')
                for (let i = 0; i < rowElements.length; i++) {
                     const row = rowElements[i];
                     const rowString = $(row).text()?.trim();
@@ -226,8 +216,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                const uuid = uuidv4().replace(/-/g, "");
      
                // Download Images
-               let imagesUrls = $('.product-images-inner .woocommerce-product-gallery img') 
-                    .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+               let imagesUrls = $('.c-product__gallery img')
+                    .map((i, img) => 'https://boretti.ir' + $(img).attr("src").replace('150x150', "600x600")).get();
      
                imagesUrls = Array.from(new Set(imagesUrls));
                await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -301,7 +291,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/htn");
+          const DATA_DIR = path.normalize(__dirname + "/boretti");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -330,7 +320,7 @@ async function main() {
                
                await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
                
-               await insertUrlToVisited(urlRow?.url);
+               await insertUrlToVisited(urlRow.url);
           }
 
      }
