@@ -266,7 +266,7 @@ async function main() {
                     height: 1080,
                });
                
-               const productInfo = await scrapSingleProduct(page, 'https://roshashop.com/product/nazin-wallpaper/', IMAGES_DIR, DOCUMENTS_DIR);
+               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
                const insertQueryInput = [
                     productInfo.URL,
                     productInfo.xpath,
