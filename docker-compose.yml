@@ -9,7 +9,7 @@ services:
     ports:
       - "4011:4008"
     volumes:
-      - ./-----:/usr/src/app/-----
+      - ./digipalizi:/usr/src/app/digipalizi
     networks:
       - custom_network
 
@@ -21,7 +21,7 @@ services:
   #   ports:
   #     - "4012:4008"
   #   volumes:
-  #     - ./-----:/usr/src/app/-----
+  #     - ./digipalizi:/usr/src/app/digipalizi
   #   networks:
   #     - custom_network
 
@@ -33,7 +33,7 @@ services:
   #   ports:
   #     - "4013:4008"
   #   volumes:
-  #     - ./-----:/usr/src/app/-----
+  #     - ./digipalizi:/usr/src/app/digipalizi
   #   networks:
   #     - custom_network
 
@@ -45,7 +45,7 @@ services:
   #   ports:
   #     - "4014:4008"
   #   volumes:
-  #     - ./-----:/usr/src/app/-----
+  #     - ./digipalizi:/usr/src/app/digipalizi
   #   networks:
   #     - custom_network
 
@@ -57,7 +57,7 @@ services:
   #   ports:
   #     - "4015:4008"
   #   volumes:
-  #     - ./-----:/usr/src/app/-----
+  #     - ./digipalizi:/usr/src/app/digipalizi
   #   networks:
   #     - custom_network
 
@@ -69,7 +69,7 @@ services:
   #   ports:
   #     - "4016:4008"
   #   volumes:
-  #     - ./-----:/usr/src/app/-----
+  #     - ./digipalizi:/usr/src/app/digipalizi
   #   networks:
   #     - custom_network
 
@@ -81,7 +81,7 @@ services:
   #   ports:
   #     - "4017:4008"
   #   volumes:
-  #     - ./-----:/usr/src/app/-----
+  #     - ./digipalizi:/usr/src/app/digipalizi
   #   networks:
   #     - custom_network
 
@@ -93,7 +93,7 @@ services:
   #   ports:
   #     - "4018:4008"
   #   volumes:
-  #     - ./-----:/usr/src/app/-----
+  #     - ./digipalizi:/usr/src/app/digipalizi
   #   networks:
   #     - custom_network
 
@@ -105,7 +105,7 @@ services:
   #   ports:
   #     - "4019:4008"
   #   volumes:
-  #     - ./-----:/usr/src/app/-----
+  #     - ./digipalizi:/usr/src/app/digipalizi
   #   networks:
   #     - custom_network
 
@@ -117,7 +117,7 @@ services:
   #   ports:
   #     - "4020:4008"
   #   volumes:
-  #     - ./-----:/usr/src/app/-----
+  #     - ./digipalizi:/usr/src/app/digipalizi
   #   networks:
   #     - custom_network
 
