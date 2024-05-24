@@ -180,7 +180,11 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const others = $('a.e-gallery-item')
                .map((i, a) => $(a).attr("href").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
+          const others_2 = $('img.attachment-large.size-large')
+               .map((i, a) => $(a).attr("href").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+
           imagesUrls.push(...others);
+          imagesUrls.push(...others_2);
           
           
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -369,5 +373,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 // job.start()
 
 
-main();
+run_1(80, 80, 22);
 

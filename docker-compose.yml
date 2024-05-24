@@ -61,41 +61,41 @@ services:
     networks:
       - custom_network
 
-  # node-app-6:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4016:4008"
-  #   volumes:
-  #     - ./roshashop:/usr/src/app/roshashop
-  #   networks:
-  #     - custom_network
+  node-app-6:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4016:4008"
+    volumes:
+      - ./roshashop:/usr/src/app/roshashop
+    networks:
+      - custom_network
 
-  # node-app-7:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4017:4008"
-  #   volumes:
-  #     - ./roshashop:/usr/src/app/roshashop
-  #   networks:
-  #     - custom_network
+  node-app-7:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4017:4008"
+    volumes:
+      - ./roshashop:/usr/src/app/roshashop
+    networks:
+      - custom_network
 
-  # node-app-8:
-  #   user: root
-  #   restart: always
-  #   build:
-  #     context: .
-  #   ports:
-  #     - "4018:4008"
-  #   volumes:
-  #     - ./roshashop:/usr/src/app/roshashop
-  #   networks:
-  #     - custom_network
+  node-app-8:
+    user: root
+    restart: always
+    build:
+      context: .
+    ports:
+      - "4018:4008"
+    volumes:
+      - ./roshashop:/usr/src/app/roshashop
+    networks:
+      - custom_network
 
   # node-app-9:
   #   user: root
