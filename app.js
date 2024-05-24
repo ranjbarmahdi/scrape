@@ -291,7 +291,7 @@ async function main() {
           console.log("End");
           if(page) await page.close();
           if(browser) await browser.close();
-          await delay(1000);
+          await delay(Math.random()*3000);
      }
 }
 
