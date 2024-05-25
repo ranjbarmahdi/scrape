@@ -48,7 +48,7 @@ async function findAllMainLinks(page, initialUrl) {
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -125,9 +125,21 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = [
+                    'https://isofam.ir/fa/products/mdf/sync/',
+                    'https://isofam.ir/fa/products/laminate-flooring/',
+                    'https://isofam.ir/fa/products/laminate-flooring/page/2/',
+                    'https://isofam.ir/fa/products/laminate-flooring/page/3/',
+                    'https://isofam.ir/fa/products/high-glass-sheets/matte-high-glass-sheets/',
+                    'https://isofam.ir/fa/products/high-glass-sheets/glossy-high-glass-sheets/',
+                    'https://isofam.ir/fa/products/mdf/melamine-mdf/',
+                    'https://isofam.ir/fa/products/mdf/melamine-mdf/page/2/',
+                    'https://isofam.ir/fa/products/mdf/melamine-mdf/page/3/',
+                    'https://isofam.ir/fa/products/mdf/%d8%a7%d9%85-%d8%af%db%8c-%d8%a7%d9%81-%d9%85%d9%84%d8%a7%d9%85%db%8c%d9%86%d9%87-%d9%85%d8%a7%d8%aa/',
+                    'https://isofam.ir/fa/products/pvc-tape/tape-edge/',
+                    'https://isofam.ir/fa/products/pvc-tape/tape-edge/page/2/',
+                    'https://isofam.ir/fa/products/mdf/beton/',
+                ]
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -159,7 +171,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://isofam.ir/fa/']
 
         // get random proxy
         const proxyList = [''];
