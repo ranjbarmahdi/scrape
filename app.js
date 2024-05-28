@@ -313,6 +313,7 @@ async function main() {
                // Lunch Browser
                browser = await getBrowser(randomProxy, true, false);
                page = await browser.newPage();
+               
                await page.setViewport({
                     width: 1920,
                     height: 1080,
