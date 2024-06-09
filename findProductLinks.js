@@ -1,5 +1,5 @@
 const cheerio = require("cheerio");
-const { getBrowser, getRandomElement, shuffleArray, delay } = require('./utils')
+const { getBrowser, getRandomElement, shuffleArray, delay, scrollToEnd } = require('./utils')
 const db = require('./config.js');
 
 
@@ -44,8 +44,44 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = [
+            'https://www.ahanpakhsh.com/glass-wool',
+            'https://www.ahanpakhsh.com/rockwool',
+            'https://www.ahanpakhsh.com/screw',
+            'https://www.ahanpakhsh.com/chicken-wire',
+            'https://www.ahanpakhsh.com/cartonplast',
+            'https://www.ahanpakhsh.com/gutter',
+            'https://www.ahanpakhsh.com/roller-shutter/colored-shutter-sheet',
+            'https://www.ahanpakhsh.com/roller-shutter/galvanize-shutter-sheet',
+            'https://www.ahanpakhsh.com/round-bar/ribbed-round-bar',
+            'https://www.ahanpakhsh.com/round-bar/simple-round-bar',
+            'https://www.ahanpakhsh.com/round-bar/ribbed-skein',
+            'https://www.ahanpakhsh.com/round-bar/skein',
+            'https://www.ahanpakhsh.com/round-bar/rebar-stirrups',
+            'https://www.ahanpakhsh.com/sheet/black-sheet',
+            'https://www.ahanpakhsh.com/sheet/galvanize-sheet',
+            'https://www.ahanpakhsh.com/sheet/oil-sheet',
+            'https://www.ahanpakhsh.com/sheet/color-sheet',
+            'https://www.ahanpakhsh.com/beams/honeycomb-beams',
+            'https://www.ahanpakhsh.com/beams/faico-beams',
+            'https://www.ahanpakhsh.com/beams/bonab-beam',
+            'https://www.ahanpakhsh.com/tube/industrial-construction-tube',
+            'https://www.ahanpakhsh.com/tube/window-tube',
+            'https://www.ahanpakhsh.com/tube/open-sections-tube',
+            'https://www.ahanpakhsh.com/tube/column-box',
+            'https://www.ahanpakhsh.com/tube/light-steel-tube',
+            'https://www.ahanpakhsh.com/tube/z-steel-tube',
+            'https://www.ahanpakhsh.com/pipe/scaffold-pipe',
+            'https://www.ahanpakhsh.com/pipe/industrial-pipe',
+            'https://www.ahanpakhsh.com/pipe/gas-pipe',
+            'https://www.ahanpakhsh.com/pipe/water-pipe',
+            'https://www.ahanpakhsh.com/pipe/galvanize-pipe',
+            'https://www.ahanpakhsh.com/pipe/furniture-pipe',
+            'https://www.ahanpakhsh.com/pipe/mannisman-pipe',
+            'https://www.ahanpakhsh.com/channel',
+            'https://www.ahanpakhsh.com/angel',
+            'https://www.ahanpakhsh.com/steel-tee-bar'
+        ]
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -124,9 +160,11 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const html = await page.content();
                 const $ = cheerio.load(html);
 
+                await scrollToEnd(page);
+
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
+                const productsUrls = $('span.hikashop_product_name > a')
+                    .map((i, e) => 'https://www.ahanpakhsh.com' + $(e).attr('href'))
                     .get()
 
                 // insert prooduct links to unvisited
@@ -134,7 +172,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                     try {
                         const url = productsUrls[j];
                         await insertUrl(url);
-                        await delay(250);
+                        await delay(100);
                     } catch (error) {
                         console.log("Error in findAllProductsLinks for loop:", error.message);
                     }
@@ -159,14 +197,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://www.ahanpakhsh.com']
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,
