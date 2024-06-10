@@ -125,7 +125,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
+          data["title"] = $('#hikashop_product_name_main').length ? $('#hikashop_product_name_main').text().trim() : "";
           data["category"] = $('notFound').last().length
                ? $('notFound').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
@@ -133,7 +133,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           data["brand"] = $('notFound').text()?.trim() || '';
 
-          data['unitOfMeasurement'] = 'عدد'
+          data['unitOfMeasurement'] = $('.rpp_product_main_unit').length ? $('.rpp_product_main_unit').text()?.replace(/واحد|\(|\)|:|فروش/g, '').trim() : "";
           data["price"] = "";
           data["xpath"] = "";
 
@@ -143,24 +143,29 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                data["xpath"] = "";
           }
           else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
+               data["price"] = $('#hikashop_product_right_part .hikashop_product_price_full > span.hikashop_product_price').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+               data["xpath"] = '/html/body/div[2]/section[4]/div/div/div/main/div/div/div/div/div/div/div[1]/form/div[2]/div[2]/span[1]/span/span[1]/text()';
           }
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.hikashop_product_custom_info_main_table tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+               const key = $(row).find('> td:first-child').text()?.trim()
+               const value = $(row).find('> td:last-child > span').map((i, p) => $(p)?.text()?.trim()).get().join('-');
                specification[key] = value;
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
+          if('تولید کننده' in specification){
+               data['brand'] = specification['تولید کننده'];
+          }
+
+
           // descriptionString
-          const descriptionString = $('notFound')
+          const descriptionString = $('#hikashop_product_description_main > p')
                .map((i, e) => $(e).text()?.trim())
                .get()
                .join('/n');
@@ -169,8 +174,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('#hikashop_main_image')
+               .map((i, img) => 'https://www.ahanpakhsh.com' + $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -226,7 +231,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/ahanPakhsh");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -255,6 +260,7 @@ async function main() {
                });
                
                const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
+               console.log(productInfo);
                const insertQueryInput = [
                     productInfo.URL,
                     productInfo.xpath,
