@@ -123,11 +123,16 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           const html = await page.content();
           const $ = await cheerio.load(html);
-
+          
+          try {
+               await page.waitForSelector('h1.product_title', {timeout:90000})
+          } catch (error) {
+               
+          }
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1.product_title').length ?  $('h1.product_title').text().trim() : "";
+          data["category"] = $('.product_meta > span > a').first().length
+               ? $('.product_meta > span > a').first()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
@@ -169,7 +174,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('img.wp-post-image.wp-post-image')
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -226,7 +231,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/azintraffic");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -237,9 +242,9 @@ async function main() {
           if (!fs.existsSync(IMAGES_DIR)) { fs.mkdirSync(IMAGES_DIR); }
 
           // get product page url from db
-          urlRow = await removeUrl();
-
-          if (urlRow?.url) {
+          // urlRow = await removeUrl();
+          // urlRow?.url
+          if (true) {
 
                // get random proxy
                const proxyList = [''];
@@ -247,14 +252,14 @@ async function main() {
 
                // Lunch Browser
                await delay(Math.random()*4000);
-               browser = await getBrowser(randomProxy, true, false);
+               browser = await getBrowser(randomProxy, false, false);
                page = await browser.newPage();
                await page.setViewport({
                     width: 1920,
                     height: 1080,
                });
                
-               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
+               const productInfo = await scrapSingleProduct(page, 'https://azintraffic.com/%D9%85%D8%AD%D8%B5%D9%88%D9%84%D8%A7%D8%AA-%D8%AA%D8%B1%D8%A7%D9%81%DB%8C%DA%A9%DB%8C/psafety/safes/assembly-station/', IMAGES_DIR, DOCUMENTS_DIR);
                const insertQueryInput = [
                     productInfo.URL,
                     productInfo.xpath,
