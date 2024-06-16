@@ -125,13 +125,13 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1.product_title').length ? $('h1.product_title').text().trim() : "";
+          data["category"] = $('.woocommerce-breadcrumb > a').last().length
+               ? $('.woocommerce-breadcrumb > a').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
-          data["brand"] = $('notFound').text()?.trim() || '';
+          data["brand"] = 'همیار انرژی';
 
           data['unitOfMeasurement'] = 'عدد'
           data["price"] = "";
@@ -149,12 +149,15 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.woocommerce-product-details__short-description > ul > li')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
-               specification[key] = value;
+               const stringRow = $(row).text().trim();
+               if(stringRow?.includes(':')){
+                    const key = stringRow.split(':')[0]?.trim()
+                    const value = stringRow.split(':')[1]?.trim()
+                    specification[key] = value;
+               }
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
@@ -169,8 +172,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('.e-gallery-item ')
+               .map((i, img) => $(img).attr("href").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -226,7 +229,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/hamyarenergy");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -356,5 +359,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 // job.start()
 
 
-main();
+run_2(80, 80, 12);
 

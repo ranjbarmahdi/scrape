@@ -48,7 +48,7 @@ async function findAllMainLinks(page, initialUrl) {
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -125,9 +125,37 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = [
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%b3%d8%a7%d9%85%d8%a7%d9%86%d9%87-%d8%ae%d8%a7%d9%85%d9%88%d8%b4-%da%a9%d9%86%d9%86%d8%af%d9%87-%d8%a2%d8%aa%d8%b4-%d8%a2%db%8c%d8%b1%d9%88%d8%b3%d9%84-h-e/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a2%db%8c%d8%b1%d9%88%d8%b3%d9%84-%d8%af%d8%b3%d8%aa%db%8c/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a2%db%8c%d8%b1%d9%88%d8%b3%d9%84-alarm-less/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d9%81%d8%b9%d8%a7%d9%84-%da%a9%d9%86%d9%86%d8%af%d9%87-%d8%b3%db%8c%d8%b3%d8%aa%d9%85-%d8%a2%db%8c%d8%b1%d9%88%d8%b3%d9%84/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-%d8%a8%d8%a7%d9%84%d8%a7%d8%b2%d9%86-%d9%88%d8%a7%da%a9%d9%86%d8%b4-%d8%b3%d8%b1%db%8c%d8%b9/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-%d9%be%d8%a7%db%8c%db%8c%d9%86-%d8%b2%d9%86-%d9%88%d8%a7%da%a9%d9%86%d8%b4-%d8%b3%d8%b1%db%8c%d8%b9/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-%d8%a8%d8%ba%d9%84-%d8%b2%d9%86-%d9%88%d8%a7%da%a9%d9%86%d8%b4-%d8%b3%d8%b1%db%8c%d8%b9/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-%d9%85%d8%ae%d9%81%db%8c-%d9%88%d8%a7%da%a9%d9%86%d8%b4-%d8%b3%d8%b1%db%8c%d8%b9/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-%d8%a8%d8%a7%d9%84%d8%a7%d8%b2%d9%86-%d9%88%d8%a7%da%a9%d9%86%d8%b4-%d8%a7%d8%b3%d8%aa%d8%a7%d9%86%d8%af%d8%a7%d8%b1%d8%af/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-%d9%be%d8%a7%db%8c%db%8c%d9%86-%d8%b2%d9%86-%d9%88%d8%a7%da%a9%d9%86%d8%b4-%d8%a7%d8%b3%d8%aa%d8%a7%d9%86%d8%af%d8%a7%d8%b1%d8%af/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-%d8%a8%d8%ba%d9%84-%d8%b2%d9%86-%d9%88%d8%a7%da%a9%d9%86%d8%b4-%d8%a7%d8%b3%d8%aa%d8%a7%d9%86%d8%af%d8%a7%d8%b1%d8%af/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-%d9%85%d8%ae%d9%81%db%8c-%d9%88%d8%a7%da%a9%d9%86%d8%b4-%d8%a7%d8%b3%d8%aa%d8%a7%d9%86%d8%af%d8%a7%d8%b1%d8%af/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a2%da%86%d8%a7%d8%b1-%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%a2%da%86%d8%a7%d8%b1-%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%b4%d9%84%d9%86%da%af-%d8%b1%d8%a7%d8%a8%d8%b7-%d8%a7%d9%86%d8%b9%d8%b7%d8%a7%d9%81-%d9%be%d8%b0%db%8c%d8%b1-%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-he/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d9%82%d8%a7%d8%a8-%d8%a7%d8%b3%d9%be%d8%b1%db%8c%d9%86%da%a9%d9%84%d8%b1-%d9%87%d9%85%db%8c%d8%a7%d8%b1-%d8%a7%d9%86%d8%b1%da%98%db%8c/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%da%a9%d9%be%d8%b3%d9%88%d9%84-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-%da%a9%d8%a7%d8%b1%d8%a7-bce/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%da%a9%d9%be%d8%b3%d9%88%d9%84-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-%da%a9%d8%a7%d8%b1%d8%a7-abce/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%da%a9%d9%be%d8%b3%d9%88%d9%84-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-%d8%a2%d8%a8-%d9%88-%d9%81%d9%88%d9%85-%da%a9%d8%a7%d8%b1%d8%a7/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%da%a9%d9%be%d8%b3%d9%88%d9%84-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-%d8%b5%d8%a7%d8%af%d8%b1%d8%a7%d8%aa%db%8c-%d9%87%d9%85%db%8c%d8%a7%d8%b1-bc/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%da%a9%d9%be%d8%b3%d9%88%d9%84-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-%d8%b5%d8%a7%d8%af%d8%b1%d8%a7%d8%aa%db%8c-%d9%87%d9%85%db%8c%d8%a7%d8%b1-abce/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%aa%d9%88%d9%be-%d8%a7%d8%b7%d9%81%d8%a7%d8%a1-%d8%ad%d8%b1%db%8c%d9%82-he/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%ac%d8%b9%d8%a8%d9%87-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-%d8%aa%da%a9-%da%a9%d8%a7%d8%a8%db%8c%d9%86/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%ac%d8%b9%d8%a8%d9%87-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-%d8%af%d9%88-%da%a9%d8%a7%d8%a8%db%8c%d9%86/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%ac%d8%b9%d8%a8%d9%87-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-%d8%af%d9%88-%da%a9%d8%a7%d8%a8%db%8c%d9%86-%d8%a7%d9%81%d9%82%db%8c-%db%8c%d8%a7-%d8%af%d9%88%d9%82%d9%84%d9%88/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%ac%d8%b9%d8%a8%d9%87-%d8%b3%d9%87-%da%a9%d8%a7%d8%a8%db%8c%d9%86-%d8%b3%d9%87-%d9%82%d9%84%d9%88/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%ac%d8%b9%d8%a8%d9%87-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-%d8%a7%db%8c%d8%b3%d8%aa%d8%a7%d8%af%d9%87/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d8%ac%d8%b9%d8%a8%d9%87-%d9%86%da%af%d9%87%d8%af%d8%a7%d8%b1%db%8c-%da%a9%d9%be%d8%b3%d9%88%d9%84-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c/',
+                    'https://hamyarenergy.com/%D9%85%D8%B7%D8%A7%D9%84%D8%A8-%D8%A7%D8%B5%D9%84%DB%8C/%d9%87%d9%88%d8%b2%d8%b1%db%8c%d9%84-%d8%a2%d8%aa%d8%b4-%d9%86%d8%b4%d8%a7%d9%86%db%8c-h-e/'
+                ]
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -159,7 +187,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://hamyarenergy.com/']
 
         // get random proxy
         const proxyList = [''];
