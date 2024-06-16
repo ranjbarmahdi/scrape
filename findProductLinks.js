@@ -44,8 +44,14 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = [
+            'https://www.bms-ind.com/fa/category/12-block-making-machine',
+            'https://www.bms-ind.com/fa/category/18-wet-press-machine',
+            'https://www.bms-ind.com/fa/category/16-kerbstone-making-machine',
+            'https://www.bms-ind.com/fa/category/13-mosaic-press-machine',
+            'https://www.bms-ind.com/fa/category/14-wet-press-paving-machine',
+            'https://www.bms-ind.com/fa/category/15-concrete-mixer-machine',
+        ]
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,7 +131,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('.hikashop_product_name > a')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -159,7 +165,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://www.bms-ind.com/fa/']
 
         // get random proxy
         const proxyList = [''];
