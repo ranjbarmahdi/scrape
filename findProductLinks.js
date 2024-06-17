@@ -44,8 +44,8 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks =  $('.category-grid > a')
+            .map((i, e) => $(e).attr('href').trim()).get();
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,9 +125,18 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls =  $('.product-title > a')
                     .map((i, e) => $(e).attr('href'))
-                    .get()
+                    .get();
+
+                const x = [
+                    'https://afraset.com/product/drain/drainline/idp/%da%a9%d9%81%d8%b4%d9%88%d8%b1-%d8%ae%d8%b7%db%8c-%d8%b3%d8%b1%d8%a7%d9%85%db%8c%da%a9-%d8%ae%d9%88%d8%b1-infinity-drain-proidp/',
+                    'https://afraset.com/product/drain/drainline/sd/%da%a9%d9%81%d8%b4%d9%88%d8%b1-%d8%ae%d8%b7%db%8c-%d8%b3%d8%b1%d8%a7%d9%85%db%8c%da%a9-%d8%ae%d9%88%d8%b1-solid-drainsd/',
+                    'https://afraset.com/product-category/drain/drainlinestone/',
+                    'https://afraset.com/product-category/drain/%da%a9%d9%81%d8%b4%d9%88%d8%b1-10x10-2/',
+                ];
+               
+                productsUrls.push(...x);
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -159,7 +168,10 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = [
+            'https://afraset.com/product-category/%da%a9%d8%a7%d8%a8%db%8c%d9%86-%d8%af%d9%88%d8%b4/%d9%be%d8%a7%d8%b1%d8%aa%db%8c%d8%b4%d9%86-%d8%b1%db%8c%d9%84%db%8c/',
+            'https://afraset.com/product-category/%da%a9%d8%a7%d8%a8%db%8c%d9%86-%d8%af%d9%88%d8%b4/%d9%be%d8%a7%d8%b1%d8%aa%db%8c%d8%b4%d9%86-%d9%84%d9%88%d9%84%d8%a7%db%8c%db%8c/'
+        ]
 
         // get random proxy
         const proxyList = [''];
