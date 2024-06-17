@@ -48,7 +48,7 @@ async function findAllMainLinks(page, initialUrl) {
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -125,9 +125,16 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = [
+                    'https://gescool.ir/product/%da%86%db%8c%d9%84%d8%b1-7-%d8%aa%d9%86-%d9%86%d8%a7%d9%85%db%8c/',
+                    'https://gescool.ir/product/%da%86%db%8c%d9%84%d8%b1-%db%b6-%d8%aa%d9%86-%d9%86%d8%a7%d9%85%db%8c/',
+                    'https://gescool.ir/product/%d8%af%d8%a7%da%a9%d8%aa-%d8%a7%d8%b3%d9%be%d9%84%db%8c%d8%aa-4-%d8%aa%d9%86/',
+                    'https://gescool.ir/product/%d8%af%d8%a7%da%a9%d8%aa-%d8%a7%d8%b3%d9%be%d9%84%db%8c%d8%aa-2-%d8%aa%d9%86/',
+                    'https://gescool.ir/product/%d9%81%d9%86-%da%a9%d9%88%db%8c%d9%84/',
+                    'https://gescool.ir/product/%d9%87%d9%88%d8%a7%d8%b3%d8%a7%d8%b2-%da%af%d8%b3-%da%a9%d9%88%d9%84/',
+                    'https://gescool.ir/product/%d9%85%db%8c%d9%86%db%8c-%da%86%db%8c%d9%84%d8%b1/',
+                    'https://gescool.ir/product/%d8%aa%d8%b1%d9%85%d9%88%d8%b3%d8%aa%d8%a7%d8%aa/#',
+                ]
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -159,7 +166,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://gescool.ir/']
 
         // get random proxy
         const proxyList = [''];

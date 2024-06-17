@@ -125,13 +125,13 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1').length ? `${$('h1').text().trim() } ${'برند گسکول'}`: "";
+          data["category"] = $('.woocommerce-breadcrumb > a').last().length
+               ? $('.woocommerce-breadcrumb > a').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
-          data["brand"] = $('notFound').text()?.trim() || '';
+          data["brand"] = 'گسکول';
 
           data['unitOfMeasurement'] = 'عدد'
           data["price"] = "";
@@ -160,7 +160,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
           // descriptionString
-          const descriptionString = $('notFound')
+          const descriptionString = $('.attachment-full.size-full')
                .map((i, e) => $(e).text()?.trim())
                .get()
                .join('/n');
@@ -169,7 +169,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('.attachment-full.size-full')
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -226,7 +226,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/gescool");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -356,5 +356,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 // job.start()
 
 
-main();
+run_2(80,80,13);
 
