@@ -431,6 +431,6 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 
 
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
 
