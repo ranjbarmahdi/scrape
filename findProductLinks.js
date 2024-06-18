@@ -44,8 +44,17 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = [
+            'https://nexiio.ir/Product/List/5',
+            'https://nexiio.ir/Product/List/12',
+            'https://nexiio.ir/Product/List/13',
+            'https://nexiio.ir/Product/List/8',
+            'https://nexiio.ir/Product/List/7',
+            'https://nexiio.ir/Product/List/10',
+            'https://nexiio.ir/Product/List/14',
+            'https://nexiio.ir/Product/List/15',
+            'https://nexiio.ir/Product/List/11',
+        ]
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,9 +134,10 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
+                const productsUrls = $('.d-block')
+                    .map((i, e) => 'https://nexiio.ir' + $(e).attr('href'))
                     .get()
+                    .filter(url => url?.includes('Product'))
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -159,7 +169,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://nexiio.ir/']
 
         // get random proxy
         const proxyList = [''];

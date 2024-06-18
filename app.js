@@ -161,7 +161,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
+          data["title"] = $('.custom-title').length ? $('.custom-title').text().trim() : "";
           data["category"] = $('notFound').last().length
                ? $('notFound').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
@@ -206,28 +206,32 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.product-detail > div > div:last > div > p').filter((i, e) => {
+               return $(e).text()?.includes(':')
+          })
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+               const key = $(row).text()?.split(':')[0]?.trim();
+               const value = $(row).text()?.split(':')[1]?.trim();
                specification[key] = value;
           }
           specification = omitEmpty(specification);
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
           // descriptionString
-          const descriptionString = $('notFound')
-               .map((i, e) => $(e).text()?.trim())
-               .get()
-               .join('/n');
+          const descriptionString = $('.product-detail > div > div:last > div > *').filter((i, e) => {
+               return !$(e).text()?.includes(':') && !$(e).text() == ''
+          })
+          .map((i, e) => $(e).text()?.trim())
+          .get()
+          .join('\n');
 
           // Generate uuidv4
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('.product-detail img')
+               .map((i, img) => 'https://nexiio.ir' + $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -283,7 +287,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/nexiio");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -414,6 +418,6 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 
 
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
 
