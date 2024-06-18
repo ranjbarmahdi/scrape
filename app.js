@@ -1,4 +1,4 @@
-const { getBrowser, getRandomElement, delay, checkMemoryCpu, downloadImages } = require('./utils')
+const { getBrowser, getRandomElement, delay, checkMemoryCpu, downloadImages, convertToEnglishNumber } = require('./utils')
 const omitEmpty = require('omit-empty');
 const { v4: uuidv4 } = require("uuid");
 const fetch = require("node-fetch");
@@ -113,6 +113,42 @@ async function insertUrlToVisited(url) {
 }
 
 
+// ============================================ findMinPrice
+async function getPrice(page, xpaths, currency) {
+     let price = Infinity;
+     let xpath = '';
+     try {
+          if(xpaths.length == 0){
+               return [price, xpath];
+          }
+
+          // Find Price 
+          for (const _xpath of xpaths) {
+               try {
+                    const priceElements = await page.$x(_xpath);
+                    if (priceElements.length) {
+                         let priceText = await page.evaluate((elem) => elem.textContent?.replace(/[^\u06F0-\u06F90-9]/g, ""), priceElements[0]);
+                         priceText = convertToEnglishNumber(priceText);
+                         let priceNumber = currency ? Number(priceText) : (Number(priceText) * 10);
+                         if((priceNumber < price) && (priceNumber !== 0)){
+                              price = priceNumber;
+                              xpath = _xpath;
+                         }
+                    }
+               } catch (error) {
+                    console.log("Error in getPrice Function Foor Loop :", error.message);
+               }
+          }
+
+     } catch (error) {
+          console.log("Error In getPrice :", error);
+     }
+     finally {
+          return [price, xpath];
+     }
+}
+
+
 // ============================================ scrapSingleProduct
 async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, rowNumber = 1) {
      try {
@@ -137,16 +173,37 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           data["price"] = "";
           data["xpath"] = "";
 
-          const offPercent = $('notFound').get()
-          if (offPercent.length) {
-               data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-               data["xpath"] = "";
-          }
-          else {
-               data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-               data["xpath"] = '';
-          }
+          // price_1
+          const xpaths = [];
+          const mainXpath = '';
+          if (xpaths.length) {
+               // Find Price
+               const [amount, xpath] = await getPrice(page, xpaths, currency);
 
+               // Check Price Is Finite
+               if (isFinite(amount)) {
+                    data["price"] = amount;
+                    data["xpath"] = xpath;
+               }
+               else {
+                    data["xpath"] = mainXpath;
+               }
+          }
+               
+     
+
+          // price_2
+          // const offPercent = $('notFound').get()
+          // if (offPercent.length) {
+          //      data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+          //      data["xpath"] = "";
+          // }
+          // else {
+          //      data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+          //      data["xpath"] = '';
+          // }
+
+          
           // specification, specificationString
           let specification = {};
           const rowElements = $('notFound')
@@ -356,5 +413,7 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 // job.start()
 
 
-main();
+
+run_1(80, 80, 20);
+// run_2(80, 80, 20);
 
