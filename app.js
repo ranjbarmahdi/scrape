@@ -176,12 +176,12 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           // price_1
 
-          try {
-               await await page.waitForXPath('/html/body/div[3]/main/div[2]/div[2]/div[1]/div[3]/div[3]/p/del/span/bdi/text()', {timeout: 360000});
-               await await page.waitForXPath('/html/body/div[3]/main/div[2]/div[2]/div[1]/div[3]/div[3]/p/ins/span/bdi/text()', {timeout: 360000});
-          } catch (error) {
+          // try {
+          //      await await page.waitForXPath('/html/body/div[3]/main/div[2]/div[2]/div[1]/div[3]/div[3]/p/del/span/bdi/text()', {timeout: 360000});
+          //      await await page.waitForXPath('/html/body/div[3]/main/div[2]/div[2]/div[1]/div[3]/div[3]/p/ins/span/bdi/text()', {timeout: 360000});
+          // } catch (error) {
                
-          }
+          // }
 
           const xpaths = [
                '/html/body/div[3]/main/div[2]/div[2]/div[1]/div[3]/div[3]/p/del/span/bdi/text()',
