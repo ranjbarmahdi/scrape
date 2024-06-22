@@ -161,13 +161,13 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
+          data["title"] = $('.title-wrap > h1').length ? `${'آجر نسوز کد'} ${$('.title-wrap > h1').text().trim()} ${'برند دیرگداز'}` : "";
           data["category"] = $('notFound').last().length
                ? $('notFound').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
-          data["brand"] = $('notFound').text()?.trim() || '';
+          data["brand"] = $('notFound').text()?.trim() || 'دیرگداز';
 
           data['unitOfMeasurement'] = 'عدد'
           data["price"] = "";
@@ -226,8 +226,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('#wrapper > section.wpb_row.vc_row-fluid.vc_rtl-columns-reverse.vc_row-o-equal-height.vc_row-flex > div img')
+               .map((i, img) => 'https://dirgodaz.com' + $(img).attr("src").replace(/-thumb/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -283,7 +283,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/dirgodaz");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -414,6 +414,6 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 
 
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
 

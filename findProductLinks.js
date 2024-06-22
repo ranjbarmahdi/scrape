@@ -44,9 +44,12 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
-
+        const mainLinks = [
+            'https://dirgodaz.com/products/plaque-22',
+            'https://dirgodaz.com/products/plaque-26',
+            'https://dirgodaz.com/products/plaque-31',
+            'https://dirgodaz.com/products/decorative'
+        ]
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
 
@@ -125,7 +128,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('#wrapper > section > div > div > div > div > div > .wpb_text_column > div > h2 > a')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -159,7 +162,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://dirgodaz.com/']
 
         // get random proxy
         const proxyList = [''];
