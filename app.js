@@ -162,23 +162,26 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           const data = {};
           data["title"] = $('h1').length ? $('h1').text().trim() : "";
-          data["category"] = $('#__next > div > div > div.myContainer > div.flex.flex-wrap.justify-start.items-start.gap-8 > div.mantine-rtl-Paper-root.mantine-rtl-Card-root.text-sm.flex.max-w-xs.flex-col.gap-3.items-stretch.justify-center.mantine-rtl-122l8zg > div:nth-child(3) > div.flex.flex-col.gap-2.items-start.justify-start.text-left > strong > div').last().length
-               ? $('#__next > div > div > div.myContainer > div.flex.flex-wrap.justify-start.items-start.gap-8 > div.mantine-rtl-Paper-root.mantine-rtl-Card-root.text-sm.flex.max-w-xs.flex-col.gap-3.items-stretch.justify-center.mantine-rtl-122l8zg > div:nth-child(3) > div.flex.flex-col.gap-2.items-start.justify-start.text-left > strong > div').last()
+          data["category"] = $('#__next > div > div > div.container.px-4.mt-14 > div > div > div > div > a:nth-child(5)').last().length
+               ? $('#__next > div > div > div.container.px-4.mt-14 > div > div > div > div > a:nth-child(5)').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
-          data["brand"] = $('#__next > div > div > div.myContainer > div.flex.flex-wrap > div.mantine-rtl-Paper-root > div.flex.flex-wrap.justify-between.items-center.gap-6 > div.flex.gap-2.items-center.justify-start').text()?.trim() || '';
+          data["brand"] = $('#__next > div > div > section > div.gap-8 > div.flex.flex-col.mt-10.relative > div.flex.flex-col.gap-2.justify-center.items-start > div > div.mantine-rtl-Badge-root:first').text()?.trim() || '';
 
-          data['unitOfMeasurement'] = $('#__next > div > div > div.myContainer > div.flex.flex-wrap.justify-start > div.mantine-rtl-Paper-root.mantine-rtl-Card-root.text-sm> div.flex.flex-wrap.justify-between.items-center.gap-4 > strong > div').text()?.trim() || '';
+          data['unitOfMeasurement'] =  'عدد';
           data["price"] = "";
           data["xpath"] = "";
 
           // price_1
-          const xpaths = [];
-          const mainXpath = '';
+          const xpaths = [
+               '/html/body/div[1]/div/div/section/div[4]/div[2]/div/div/div/div[2]/div[1]/div/h2[1]/text()',
+               '/html/body/div[1]/div/div/section/div[4]/div[2]/div/div/div/div[2]/div[1]/div/h2[2]/text()'
+          ];
+          const mainXpath = '/html/body/div[1]/div/div/section/div[4]/div[2]/div/div/div/div[2]/div[1]/div/h2[2]/text()';
           if (xpaths.length) {
                // Find Price
-               const [amount, xpath] = await getPrice(page, xpaths, currency);
+               const [amount, xpath] = await getPrice(page, xpaths, false);
 
                // Check Price Is Finite
                if (isFinite(amount)) {
@@ -217,7 +220,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
           // descriptionString
-          const descriptionString = $('div.prose ')
+          const descriptionString = $('div.prose:first')
                .map((i, e) => $(e).text()?.trim())
                .get()
                .join('\n');
@@ -226,8 +229,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('img[alt=bran]')
-               .map((i, img) => 'https://sakhtbazar.com' + $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('#__next > div > div > section > div.gap-8 > div> div > div.flex.flex-auto.z-40.ltr > div > img')
+               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
