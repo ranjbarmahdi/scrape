@@ -161,15 +161,15 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1').length ? $('h1').text().trim() : "";
+          data["category"] = $('#__next > div > div > div.myContainer > div.flex.flex-wrap.justify-start.items-start.gap-8 > div.mantine-rtl-Paper-root.mantine-rtl-Card-root.text-sm.flex.max-w-xs.flex-col.gap-3.items-stretch.justify-center.mantine-rtl-122l8zg > div:nth-child(3) > div.flex.flex-col.gap-2.items-start.justify-start.text-left > strong > div').last().length
+               ? $('#__next > div > div > div.myContainer > div.flex.flex-wrap.justify-start.items-start.gap-8 > div.mantine-rtl-Paper-root.mantine-rtl-Card-root.text-sm.flex.max-w-xs.flex-col.gap-3.items-stretch.justify-center.mantine-rtl-122l8zg > div:nth-child(3) > div.flex.flex-col.gap-2.items-start.justify-start.text-left > strong > div').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
-          data["brand"] = $('notFound').text()?.trim() || '';
+          data["brand"] = $('#__next > div > div > div.myContainer > div.flex.flex-wrap > div.mantine-rtl-Paper-root > div.flex.flex-wrap.justify-between.items-center.gap-6 > div.flex.gap-2.items-center.justify-start').text()?.trim() || '';
 
-          data['unitOfMeasurement'] = 'عدد'
+          data['unitOfMeasurement'] = $('#__next > div > div > div.myContainer > div.flex.flex-wrap.justify-start > div.mantine-rtl-Paper-root.mantine-rtl-Card-root.text-sm> div.flex.flex-wrap.justify-between.items-center.gap-4 > strong > div').text()?.trim() || '';
           data["price"] = "";
           data["xpath"] = "";
 
@@ -217,17 +217,17 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
           // descriptionString
-          const descriptionString = $('notFound')
+          const descriptionString = $('div.prose ')
                .map((i, e) => $(e).text()?.trim())
                .get()
-               .join('/n');
+               .join('\n');
 
           // Generate uuidv4
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          let imagesUrls = $('img[alt=bran]')
+               .map((i, img) => 'https://sakhtbazar.com' + $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
           await downloadImages(imagesUrls, imagesDIR, uuid)
@@ -283,7 +283,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/sakhtbazar");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -304,7 +304,7 @@ async function main() {
 
                // Lunch Browser
                await delay(Math.random()*4000);
-               browser = await getBrowser(randomProxy, true, false);
+               browser = await getBrowser(randomProxy, false, false);
                page = await browser.newPage();
                await page.setViewport({
                     width: 1920,
