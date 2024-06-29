@@ -44,8 +44,8 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = $('.vc_custom_heading > h2 > a')
+            .map((i, a) => 'https://www.ashekarsazco.com' + $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,7 +125,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('a.product-loop-title')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -159,7 +159,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://www.ashekarsazco.com/%d9%85%d8%ad%d8%b5%d9%88%d9%84%d8%a7%d8%aa/']
 
         // get random proxy
         const proxyList = [''];
