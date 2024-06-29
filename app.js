@@ -161,24 +161,26 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
+          data["title"] = $('.services_page_title').length ? $('.services_page_title').text().trim() : "";
           data["category"] = $('notFound').last().length
                ? $('notFound').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
-          data["brand"] = $('notFound').text()?.trim() || '';
+          data["brand"] = $('notFound').text()?.trim() || 'hb board';
 
           data['unitOfMeasurement'] = 'عدد'
           data["price"] = "";
           data["xpath"] = "";
 
           // price_1
-          const xpaths = [];
+          const xpaths = [
+               '/html/body/div[1]/div/div[3]/div/div[1]/article/section[1]/div/div/text()'
+          ];
           const mainXpath = '';
           if (xpaths.length) {
                // Find Price
-               const [amount, xpath] = await getPrice(page, xpaths, currency);
+               const [amount, xpath] = await getPrice(page, xpaths, false);
 
                // Check Price Is Finite
                if (isFinite(amount)) {
@@ -217,16 +219,18 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
           // descriptionString
-          const descriptionString = $('notFound')
+          const descriptionString = $('.services_page_content > p').filter((i, e) => {
+               return !$(e)?.text()?.includes('سفارش')
+           })
                .map((i, e) => $(e).text()?.trim())
                .get()
-               .join('/n');
+               .join('\n');
 
           // Generate uuidv4
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('.services_page_featured img') 
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -283,7 +287,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/hbboard");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -414,6 +418,6 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 
 
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
 

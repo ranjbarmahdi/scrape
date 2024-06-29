@@ -48,7 +48,7 @@ async function findAllMainLinks(page, initialUrl) {
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -125,7 +125,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('.sc_services_item_title > a')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -159,7 +159,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://hbboard.ir/services/']
 
         // get random proxy
         const proxyList = [''];
