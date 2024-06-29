@@ -1,15 +1,15 @@
 version: '3.7'
 
 services:
-  node-app-1:
+  node-app:
     user: root
     restart: always
     build:
       context: .
     ports:
-      - "4011:4008"
+      - "4000-4500:4008"
     volumes:
-      - ./-----:/usr/src/app/-----
+      - ./tehrankitchen:/usr/src/app/tehrankitchen
     networks:
       - custom_network
 

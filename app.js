@@ -161,24 +161,36 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
-                    .map((i, a) => $(a).text().trim()).get().join(" > ")
-               : "";
-
-          data["brand"] = $('notFound').text()?.trim() || '';
+          data["title"] = $('h1.product-title').length ? $('h1.product-title').text().trim() : "";
+          data["category"] = $('.woocommerce-breadcrumb > a').last().length
+          ? $('.woocommerce-breadcrumb > a').last()
+          .map((i, a) => $(a).text().trim()).get().join(" > ")
+          : "";
+          
+          data["brand"] = $('.posted_in').filter((i, e) => {
+               return $(e).text()?.includes('برند')
+          })?.first()?.text()?.split(':')[1]?.trim() || '';
+          
+          if(data['brand']){
+               data["title"] = $('h1.product-title').length ? `${$('h1.product-title').text().trim()} ${'برند'} ${data['brand']}` : "";
+          }
 
           data['unitOfMeasurement'] = 'عدد'
           data["price"] = "";
           data["xpath"] = "";
 
           // price_1
-          const xpaths = [];
-          const mainXpath = '';
+          const xpaths = [
+               '/html/body/div[1]/main/div/div[2]/div/div[1]/div/div[2]/div[2]/p/span/bdi/text()',
+               '/html/body/div[1]/main/div/div[2]/div/div[1]/div/div[2]/div[2]/p/span[1]/bdi/text()',
+               '/html/body/div[1]/main/div/div[2]/div/div[1]/div/div[2]/div[2]/p/span[2]/bdi/text()',
+               '/html/body/div[1]/main/div/div[2]/div/div[1]/div/div[2]/div[3]/p/span/bdi/text()'
+          ];
+
+          const mainXpath = '/html/body/div[1]/main/div/div[2]/div/div[1]/div/div[2]/div[2]/p/span/bdi/text()';
           if (xpaths.length) {
                // Find Price
-               const [amount, xpath] = await getPrice(page, xpaths, currency);
+               const [amount, xpath] = await getPrice(page, xpaths, false);
 
                // Check Price Is Finite
                if (isFinite(amount)) {
@@ -206,11 +218,11 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.shop_attributes > tbody > tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
                const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('-');
                specification[key] = value;
           }
           specification = omitEmpty(specification);
@@ -226,7 +238,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('.product-gallery img') 
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -283,7 +295,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/tehrankitchen");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
