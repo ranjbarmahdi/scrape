@@ -44,8 +44,13 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = [
+            'https://hantaibms.com/product-category/%d8%a2%db%8c%d9%81%d9%88%d9%86-%d8%aa%d8%b5%d9%88%db%8c%d8%b1%db%8c/',
+            'https://hantaibms.com/product-category/%d8%aa%d8%a7%da%86-%d9%be%d9%86%d9%84-%d9%87%d8%a7/',
+            'https://hantaibms.com/product-category/%d8%aa%d8%ac%d9%87%db%8c%d8%b2%d8%a7%d8%aa-%d8%aa%d8%a7%d8%a8%d9%84%d9%88%db%8c%db%8c/',
+            'https://hantaibms.com/product-category/%da%a9%d9%84%db%8c%d8%af/',
+            'https://hantaibms.com/product-category/%d9%87%d8%aa%d9%84%db%8c/',
+        ]
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,7 +130,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('.product-element-bottom > h3 > a')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -141,7 +146,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 }
 
 
-                nextPageBtn = await page.$$('notFound')
+                nextPageBtn = await page.$$('a.next.page-numbers')
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
@@ -159,7 +164,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://hantaibms.com']
 
         // get random proxy
         const proxyList = [''];
