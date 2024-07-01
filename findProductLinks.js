@@ -48,7 +48,7 @@ async function findAllMainLinks(page, initialUrl) {
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -125,8 +125,8 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
+                const productsUrls = $('#sp-menu > div > div > ul > li.sp-menu-item.sp-has-child.active.menu-justify > div > div > div > div > ul > li > ul > li > a')
+                    .map((i, e) =>'http://www.behsazantaps.com' + $(e).attr('href'))
                     .get()
 
                 // insert prooduct links to unvisited
@@ -159,7 +159,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['http://www.behsazantaps.com/index.php/fa/%D8%B4%DB%8C%D8%B1%D8%A2%D9%84%D8%A7%D8%AA-%D8%A7%D9%87%D8%B1%D9%85%DB%8C-2/4/%D8%B4%DB%8C%D8%B1%D8%A2%D9%84%D8%A7%D8%AA-%D8%A7%D9%87%D8%B1%D9%85%DB%8C-%D8%A2%D8%A8%D9%86%D9%88%D8%B3.html']
 
         // get random proxy
         const proxyList = [''];
