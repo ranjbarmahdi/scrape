@@ -44,7 +44,7 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
+        const mainLinks = $('.product-categories > li > div > a')
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
@@ -125,7 +125,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('.woocommerce-loop-product__title > a')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -141,7 +141,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 }
 
 
-                nextPageBtn = await page.$$('notFound')
+                nextPageBtn = await page.$$('a.next.page-numbers')
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
@@ -159,7 +159,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://pantalift.com/product-category/%d9%be%d9%86%d9%84-%d8%af%d8%a7%d8%ae%d9%84-%da%a9%d8%a7%d8%a8%db%8c%d9%86/']
 
         // get random proxy
         const proxyList = [''];
