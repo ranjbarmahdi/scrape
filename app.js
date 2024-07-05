@@ -31,6 +31,7 @@ async function existsUrl() {
 async function removeUrl() {
      const existsQuery = `
         SELECT * FROM unvisited u 
+        order by "id" ASC
         limit 1
     `
      const deleteQuery = `
@@ -210,7 +211,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
                const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('\n');
+               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('-');
                specification[key] = value;
           }
           specification = omitEmpty(specification);
@@ -220,7 +221,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const descriptionString = $('notFound')
                .map((i, e) => $(e).text()?.trim())
                .get()
-               .join('/n');
+               .join('\n');
 
           // Generate uuidv4
           const uuid = uuidv4().replace(/-/g, "");
