@@ -160,6 +160,35 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const html = await page.content();
           const $ = await cheerio.load(html);
 
+          let title = $('h1').length ? $('h1').text().trim() : "";
+          let names = [];
+          
+          const variants = $('.variations > tbody > tr').get();
+
+          // Extract variant values
+          const variantArrays = variants.map(variant => {
+               const liElements = $(variant).find('td > div > select > option.attached').get();
+               return liElements.map(li => $(li).text()?.trim());
+          });
+          
+          // Generate all combinations of variants
+          const combinations = generateCombinations(variantArrays);
+          
+          // Append combinations to the title and push to the names array
+          for (const combination of combinations) {
+               names.push(`${title} ${combination.join(' ')}`);
+          }
+
+ 
+          for(const name of names){
+               const data = {};
+               data["title"] = name;
+               data["category"] = $('.btn-link-spoiler:not(.product-brand-title)').last().length
+                    ? $('.btn-link-spoiler:not(.product-brand-title)').last()
+                         .map((i, a) => $(a).text().trim()).get().join(" > ")
+                    : "";
+          }
+
           const data = {};
           data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
           data["category"] = $('notFound').last().length
