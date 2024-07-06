@@ -44,8 +44,8 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = $('div.row > div > a')
+            .map((i, a) => 'https://www.amitis.org' + $(a).attr('href')?.trim()).get();
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,24 +125,29 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = $('div.row > div > a')
+                .map((i, a) => 'https://www.amitis.org' + $(a).attr('href')?.trim())
+                .get();
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
                     try {
                         const url = productsUrls[j];
                         await insertUrl(url);
-                        await delay(250);
+                        await delay(150);
                     } catch (error) {
                         console.log("Error in findAllProductsLinks for loop:", error.message);
                     }
                 }
 
+                const next = $('.pagination-area > a')
+                    .filter((i, e) => {
+                        return $(e).text()?.includes('>')
+                    })
+                    .get();
 
-                nextPageBtn = await page.$$('notFound')
-                if (nextPageBtn.length) {
+                nextPageBtn = await page.$$('.pagination-area> a:last-child')
+                if (nextPageBtn.length && next.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
                 }
@@ -159,14 +164,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://www.amitis.org/fa/products']
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,
