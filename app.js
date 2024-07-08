@@ -162,9 +162,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1').length ? $('h1').text().trim() : "";
+          data["category"] = $('.woocommerce-breadcrumb > a').last().length
+               ? $('.woocommerce-breadcrumb > a').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
@@ -207,7 +207,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.shop_attributes tr')
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
                const key = $(row).find('> th:first-child').text()?.trim()
@@ -227,7 +227,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('.woocommerce-product-gallery  img')
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -235,7 +235,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
 
           // download pdfs
-          let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
+          let pdfUrls = $('a').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
           pdfUrls = Array.from(new Set(pdfUrls))
           for (let i = 0; i < pdfUrls.length; i++) {
                try {
@@ -284,7 +284,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/ebrahimco-home");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -415,6 +415,6 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 
 
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
 
