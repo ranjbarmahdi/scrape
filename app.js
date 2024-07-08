@@ -162,24 +162,26 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1').length ? $('h1').text().trim() : "";
+          data["category"] = $('.woocommerce-breadcrumb > a:last').last().length
+               ? $('.woocommerce-breadcrumb > a:last').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
-          data["brand"] = $('notFound').text()?.trim() || '';
+          data["brand"] = $('notFound').text()?.trim() || 'آذر اتصال';
 
           data['unitOfMeasurement'] = 'عدد'
           data["price"] = "";
           data["xpath"] = "";
 
           // price_1
-          const xpaths = [];
-          const mainXpath = '';
+          const xpaths = [
+               '/html/body/div[3]/div[2]/div/div/div/div[2]/div[2]/div[4]/div/div[1]/div[2]/div/div[1]/div/div/div/div/text()'
+          ];
+          const mainXpath = '/html/body/div[3]/div[2]/div/div/div/div[2]/div[2]/div[4]/div/div[1]/div[2]/div/div[1]/div/div/div/div/text()';
           if (xpaths.length) {
                // Find Price
-               const [amount, xpath] = await getPrice(page, xpaths, currency);
+               const [amount, xpath] = await getPrice(page, xpaths, false);
 
                // Check Price Is Finite
                if (isFinite(amount)) {
@@ -190,7 +192,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                     data["xpath"] = mainXpath;
                }
           }
-               
+  
      
 
           // price_2
@@ -207,11 +209,12 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           
           // specification, specificationString
           let specification = {};
-          const rowElements = $('notFound')
+          const rowElements = $('.woocommerce-product-details__short-description li').filter((i, e) => $(e)?.text()?.trim()?.includes(':'));
           for (let i = 0; i < rowElements.length; i++) {
                const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('-');
+               const rowString = $(row)?.text();
+               const key = rowString.split(':')[0]?.trim();
+               const value = rowString.split(':')[1]?.trim();
                specification[key] = value;
           }
           specification = omitEmpty(specification);
@@ -227,7 +230,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
+          let imagesUrls = $('img.wp-post-image')
                .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
 
           imagesUrls = Array.from(new Set(imagesUrls));
@@ -284,7 +287,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/azaretesal");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -415,6 +418,6 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 
 
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
 
