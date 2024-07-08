@@ -1,4 +1,4 @@
-const { getBrowser, getRandomElement, delay, checkMemoryCpu, downloadImages, convertToEnglishNumber } = require('./utils')
+const { getBrowser, getRandomElement, delay, checkMemoryCpu, downloadImages } = require('./utils')
 const omitEmpty = require('omit-empty');
 const { v4: uuidv4 } = require("uuid");
 const fetch = require("node-fetch");
@@ -31,7 +31,6 @@ async function existsUrl() {
 async function removeUrl() {
      const existsQuery = `
         SELECT * FROM unvisited u 
-        order by "id" ASC
         limit 1
     `
      const deleteQuery = `
@@ -114,42 +113,6 @@ async function insertUrlToVisited(url) {
 }
 
 
-// ============================================ findMinPrice
-async function getPrice(page, xpaths, currency) {
-     let price = Infinity;
-     let xpath = '';
-     try {
-          if(xpaths.length == 0){
-               return [price, xpath];
-          }
-
-          // Find Price 
-          for (const _xpath of xpaths) {
-               try {
-                    const priceElements = await page.$x(_xpath);
-                    if (priceElements.length) {
-                         let priceText = await page.evaluate((elem) => elem.textContent?.replace(/[^\u06F0-\u06F90-9]/g, ""), priceElements[0]);
-                         priceText = convertToEnglishNumber(priceText);
-                         let priceNumber = currency ? Number(priceText) : (Number(priceText) * 10);
-                         if((priceNumber < price) && (priceNumber !== 0)){
-                              price = priceNumber;
-                              xpath = _xpath;
-                         }
-                    }
-               } catch (error) {
-                    console.log("Error in getPrice Function Foor Loop :", error.message);
-               }
-          }
-
-     } catch (error) {
-          console.log("Error In getPrice :", error);
-     }
-     finally {
-          return [price, xpath];
-     }
-}
-
-
 // ============================================ scrapSingleProduct
 async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, rowNumber = 1) {
      try {
@@ -161,114 +124,129 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const html = await page.content();
           const $ = await cheerio.load(html);
 
-          const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
-                    .map((i, a) => $(a).text().trim()).get().join(" > ")
-               : "";
-
-          data["brand"] = $('notFound').text()?.trim() || '';
-
-          data['unitOfMeasurement'] = 'عدد'
-          data["price"] = "";
-          data["xpath"] = "";
-
-          // price_1
-          const xpaths = [];
-          const mainXpath = '';
-          if (xpaths.length) {
-               // Find Price
-               const [amount, xpath] = await getPrice(page, xpaths, currency);
-
-               // Check Price Is Finite
-               if (isFinite(amount)) {
-                    data["price"] = amount;
-                    data["xpath"] = xpath;
-               }
-               else {
-                    data["xpath"] = mainXpath;
-               }
-          }
-               
-     
-
-          // price_2
-          // const offPercent = $('notFound').get()
-          // if (offPercent.length) {
-          //      data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-          //      data["xpath"] = "";
-          // }
-          // else {
-          //      data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-          //      data["xpath"] = '';
-          // }
-
+          const name = `${$('.titleproduct').text()?.trim()}`;
+          const names = [];
+          const headers = $('#content-product-details-2 table.tablepress')
+              .find('> thead > tr > *')
+              .map((i, e) => $(e).text()?.trim())
+              .get() || [];
           
-          // specification, specificationString
-          let specification = {};
-          const rowElements = $('notFound')
-          for (let i = 0; i < rowElements.length; i++) {
-               const row = rowElements[i];
-               const key = $(row).find('> th:first-child').text()?.trim()
-               const value = $(row).find('> td > p').map((i, p) => $(p)?.text()?.trim()).get().join('-');
-               specification[key] = value;
+          const indexSpec = headers.findIndex(item => item?.includes('کد'));
+          const productRows = $('#content-product-details-2 table.tablepress').find('> tbody > tr').get();
+          
+          if (indexSpec !== -1) {
+              headers.splice(indexSpec, 1);
           }
-          specification = omitEmpty(specification);
-          const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
+          
+          if (headers.length) {
+              for (const productRow of productRows) {
+                  const tds = $(productRow).find('>td').get();
+                  if (indexSpec !== -1) {
+                      tds.splice(indexSpec, 1);
+                  }
+          
+                  const rowValues = tds.map((td, i) => `${headers[i]} ${$(td).text()?.trim()}`).join(' ');
+                  names.push(`${name} ${rowValues}`);
+              }
+          } else {
+              names.push(name);
+          }
+          
+      
 
-          // descriptionString
-          const descriptionString = $('notFound')
-               .map((i, e) => $(e).text()?.trim())
-               .get()
-               .join('\n');
-
-          // Generate uuidv4
-          const uuid = uuidv4().replace(/-/g, "");
-
-          // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
-
-          imagesUrls = Array.from(new Set(imagesUrls));
-          await downloadImages(imagesUrls, imagesDIR, uuid)
-
-
-          // download pdfs
-          let pdfUrls = $('NotFound').map((i, e) => $(e).attr('href')).get().filter(href => href.includes('pdf'))
-          pdfUrls = Array.from(new Set(pdfUrls))
-          for (let i = 0; i < pdfUrls.length; i++) {
+          for(const name of names){
                try {
-                    const pdfUrl = imagesUrls[i];
-                    const response = await fetch(pdfUrl);
-                    if (response.ok) {
-                         const buffer = await response.buffer();
-                         const localFileName = `${uuid}-${i + 1}.pdf`;
-                         const documentDir = path.normalize(documentsDir + "/" + localFileName);
-                         fs.writeFileSync(documentDir, buffer);
+                    const data = {};
+                    data["title"] = name;
+                    console.log(data["title"]);
+
+                    data["category"] = $('.navhelpbox > span > a').last().length
+                         ? $('.navhelpbox > span > a').last()
+                              .map((i, a) => $(a).text().trim()).get().join(" > ")
+                         : "";
+          
+                    data["brand"] = $('.shop-title > div > h2').map((i, e) => {
+                         if($(e).text().includes('برند')) {
+                             return $(e).text().split(':')[1]?.trim()
+                         }
+                     }).get()[0] || 'لوله گستر گلپایگان';
+          
+                    data['unitOfMeasurement'] = 'عدد'
+                    data["price"] = "";
+                    data["xpath"] = "";
+          
+                    const offPercent = $('notFound').get()
+                    if (offPercent.length) {
+                         data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+                         data["xpath"] = "";
                     }
+                    else {
+                         data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+                         data["xpath"] = '';
+                    }
+          
+                    // specification, specificationString
+                    let specification = {};
+                    specification = omitEmpty(specification);
+                    const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
+          
+                    // descriptionString
+                    const descriptionString = $('#content-product-details-1')
+                         .map((i, e) => $(e).text()?.trim())
+                         .get()
+                         .filter(p => p?.trim())
+                         .join('\n');
+          
+                    // Generate uuidv4
+                    const uuid = uuidv4().replace(/-/g, "");
+          
+                    // Download Images
+                    let imagesUrls = $('.maincontentproduct img')
+                         .map((i, img) =>  $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")?.replace('thumb2', 'thumb')?.replace('thumb', 'thumb2')).get();
+          
+
+                    imagesUrls = Array.from(new Set(imagesUrls));
+                    await downloadImages(imagesUrls, imagesDIR, uuid)
+          
+                    // Returning Tehe Required Data For Excel
+                    const productExcelDataObject = {
+                         URL: productURL,
+                         xpath: data["xpath"],
+                         specifications: specificationString,
+                         description: descriptionString,
+                         price: data["price"],
+                         unitOfMeasurement: data['unitOfMeasurement'],
+                         category: data["category"],
+                         brand: data["brand"],
+                         SKU: uuid,
+                         name: data["title"],
+                         row: rowNumber
+                    };
+     
+                    const insertQueryInput = [
+                         productExcelDataObject.URL,
+                         productExcelDataObject.xpath,
+                         productExcelDataObject.specifications,
+                         productExcelDataObject.description,
+                         productExcelDataObject.price,
+                         productExcelDataObject.unitOfMeasurement,
+                         productExcelDataObject.category,
+                         productExcelDataObject.brand,
+                         productExcelDataObject.SKU,
+                         productExcelDataObject.name,
+                         productExcelDataObject.row
+                    ];
+     
+     
+                    await insertProduct(insertQueryInput);
+                    await delay(200)
                } catch (error) {
-                    console.log("Error In Download Documents", error);
+                    console.log(error);
                }
+
           }
 
-
-          // Returning Tehe Required Data For Excel
-          const productExcelDataObject = {
-               URL: productURL,
-               xpath: data["xpath"],
-               specifications: specificationString,
-               description: descriptionString,
-               price: data["price"],
-               unitOfMeasurement: data['unitOfMeasurement'],
-               category: data["category"],
-               brand: data["brand"],
-               SKU: uuid,
-               name: data["title"],
-               row: rowNumber
-          };
-
-          return productExcelDataObject;
+          return '';
      } catch (error) {
           console.log("Error In scrapSingleProduct in page.goto", error);
           await insertUrlToProblem(productURL);
@@ -284,7 +262,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/loolegostar");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
@@ -304,7 +282,6 @@ async function main() {
                const randomProxy = getRandomElement(proxyList);
 
                // Lunch Browser
-               await delay(Math.random()*4000);
                browser = await getBrowser(randomProxy, true, false);
                page = await browser.newPage();
                await page.setViewport({
@@ -312,26 +289,10 @@ async function main() {
                     height: 1080,
                });
                
-               const productInfo = await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
-               const insertQueryInput = [
-                    productInfo.URL,
-                    productInfo.xpath,
-                    productInfo.specifications,
-                    productInfo.description,
-                    productInfo.price,
-                    productInfo.unitOfMeasurement,
-                    productInfo.category,
-                    productInfo.brand,
-                    productInfo.SKU,
-                    productInfo.name,
-                    productInfo.row
-               ];
+               await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
 
-               // if exists productInfo insert it to products
-               if (productInfo) {
-                    await insertProduct(insertQueryInput);
-                    await insertUrlToVisited(urlRow?.url);
-               }
+               await insertUrlToVisited(urlRow?.url);
+               
 
           }
 
@@ -345,6 +306,7 @@ async function main() {
           console.log("End");
           if(page) await page.close();
           if(browser) await browser.close();
+          await delay(1000);
      }
 }
 
@@ -414,7 +376,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory){
 // job.start()
 
 
-
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
-
+// run_1(80, 80, 12)
+run_2(80, 80, 12);
