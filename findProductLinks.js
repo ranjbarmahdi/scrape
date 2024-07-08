@@ -1,5 +1,5 @@
 const cheerio = require("cheerio");
-const { getBrowser, getRandomElement, shuffleArray, delay } = require('./utils')
+const { getBrowser, getRandomElement, shuffleArray, delay, convertToEnglishNumber } = require('./utils')
 const db = require('./config.js');
 
 
@@ -44,7 +44,7 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
+        const mainLinks = $('a.item')
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
@@ -76,15 +76,14 @@ async function findAllPagesLinks(page, mainLinks) {
             const $ = cheerio.load(html);
 
             // find last page number and preduce other pages urls
-            const paginationElement = $('notFound');
-            console.log("Pagination Element : ", paginationElement.length);
+            const paginationElement = $('.paging');
             if (paginationElement.length) {
-
-                let lsatPageNumber = $('notFound')?.last().text()?.trim();
+                let lsatPageNumber = $('.paging > a:last')?.last().text()?.trim();
+                lsatPageNumber = convertToEnglishNumber(lsatPageNumber)
                 console.log("Last Page Number : ", lsatPageNumber);
                 lsatPageNumber = Number(lsatPageNumber);
                 for (let j = 1; j <= lsatPageNumber; j++) {
-                    const newUrl = url + `?page=${j}`
+                    const newUrl = url + `/page=${j}`
                     allPagesLinks.push(newUrl)
                 }
             }
@@ -125,7 +124,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
+                const productsUrls = $('a.item')
                     .map((i, e) => $(e).attr('href'))
                     .get()
 
@@ -134,7 +133,7 @@ async function findAllProductsLinks(page, allPagesLinks) {
                     try {
                         const url = productsUrls[j];
                         await insertUrl(url);
-                        await delay(250);
+                        await delay(150);
                     } catch (error) {
                         console.log("Error in findAllProductsLinks for loop:", error.message);
                     }
@@ -159,14 +158,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://www.ebrahimco.com/industrial/']
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,
@@ -176,8 +175,8 @@ async function main() {
 
         for (const u of INITIAL_PAGE_URL) {
             const mainLinks = await findAllMainLinks(page, u)
-            // const AllPagesLinks = await findAllPagesLinks(page, mainLinks);
-            await findAllProductsLinks(page, mainLinks);
+            const AllPagesLinks = await findAllPagesLinks(page, mainLinks);
+            await findAllProductsLinks(page, AllPagesLinks);
         }
 
         // Close page and browser
