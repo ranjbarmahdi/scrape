@@ -1,5 +1,5 @@
 const cheerio = require("cheerio");
-const { getBrowser, getRandomElement, shuffleArray, delay } = require('./utils')
+const { getBrowser, getRandomElement, shuffleArray, delay, scrollToEnd } = require('./utils')
 const db = require('./config.js');
 
 
@@ -44,11 +44,10 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
-
+        const mainLinks = '';
+        
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -121,20 +120,23 @@ async function findAllProductsLinks(page, allPagesLinks) {
             do {
                 c++;
                 console.log(c);
+
+                // await scrollToEnd(page);
+                // await delay(3000);
+
                 const html = await page.content();
                 const $ = cheerio.load(html);
 
+                
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
-
+                const productsUrls = require('./productsUrls.json')
+                
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
                     try {
                         const url = productsUrls[j];
                         await insertUrl(url);
-                        await delay(250);
+                        await delay(50);
                     } catch (error) {
                         console.log("Error in findAllProductsLinks for loop:", error.message);
                     }
@@ -159,14 +161,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ['https://sakhtbazar.com']
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,

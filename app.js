@@ -171,13 +171,16 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           data["brand"] = $('#__next > div > div > section > div > div > div > div > div.mantine-rtl-105jbfs > span').text()?.trim() || '';
 
-          data['unitOfMeasurement'] = 'عدد'
+          data['unitOfMeasurement'] =  'عدد';
           data["price"] = "";
           data["xpath"] = "";
 
           // price_1
-          const xpaths = [];
-          const mainXpath = '';
+          const xpaths = [
+               '/html/body/div[1]/div/div/section/div[4]/div[2]/div/div/div/div[2]/div[1]/div/h2[1]/text()',
+               '/html/body/div[1]/div/div/section/div[4]/div[2]/div/div/div/div[2]/div[1]/div/h2[2]/text()'
+          ];
+          const mainXpath = '/html/body/div[1]/div/div/section/div[4]/div[2]/div/div/div/div[2]/div[1]/div/h2[2]/text()';
           if (xpaths.length) {
                // Find Price
                const [amount, xpath] = await getPrice(page, xpaths, false);
@@ -302,7 +305,7 @@ async function main() {
      let browser;
      let page;
      try {
-          const DATA_DIR = path.normalize(__dirname + "/directory");
+          const DATA_DIR = path.normalize(__dirname + "/sakhtbazar");
           const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
           const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 

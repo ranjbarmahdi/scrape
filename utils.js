@@ -108,10 +108,10 @@ async function downloadImages(imagesUrls, imagesDIR, uuid) {
                 if (imageExtensionMatch) {
                     imageType = imageExtensionMatch[0];
                 }
-
-                // Generate uuidv4
-                const localFileName = `${uuid}-${i+1}${imageType}`;
-                const imageDir = path.normalize(path.join(imagesDIR, localFileName));
+                const localFileName = `${uuid}-${i + 1}${'.jpg'}`;
+                const imageDir = path.normalize(
+                    imagesDIR + "/" + localFileName
+                );
                 fs.writeFileSync(imageDir, buffer);
             }
         } catch (error) {
