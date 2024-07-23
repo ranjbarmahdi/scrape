@@ -96,20 +96,23 @@ const getRandomElement = (array) => {
 async function downloadImages(imagesUrls, imagesDIR, uuid) {
     for (let i = 0; i < imagesUrls.length; i++) {
         try {
-
             const imageUrl = imagesUrls[i];
             const response = await fetch(imageUrl);
-            if (response.status == 200) {
 
+            if (response.status === 200) {
                 const buffer = await response.buffer();
-                let imageType = path.extname(imageUrl);
-                if (!imageType) {
-                    imageType = '.jpg'
+
+                // Determine image type based on URL
+                let imageType = '.jpg'; // default
+                const imageExtensionMatch = imageUrl.match(/\.(jpg|jpeg|png|webp|gif|bmp|tiff|svg|ico)$/i);
+                if (imageExtensionMatch) {
+                    imageType = imageExtensionMatch[0];
                 }
-                const localFileName = `${uuid}-${i + 1}${imageType}`;
-                const imageDir = path.normalize(
-                    imagesDIR + "/" + localFileName
-                );
+
+                // Generate uuidv4
+                const shortUuid = uuidv4()?.replace(/-/g, "")?.slice(0, 4);
+                const localFileName = `${uuid}-${shortUuid}${imageType}`;
+                const imageDir = path.normalize(path.join(imagesDIR, localFileName));
                 fs.writeFileSync(imageDir, buffer);
             }
         } catch (error) {
@@ -117,6 +120,7 @@ async function downloadImages(imagesUrls, imagesDIR, uuid) {
         }
     }
 }
+
 
 
 //============================================ Login

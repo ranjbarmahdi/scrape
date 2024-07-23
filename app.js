@@ -227,11 +227,29 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          let imagesUrls = $('notFound') 
-               .map((i, img) => $(img).attr("src").replace(/(-[0-9]+x[0-9]+)/g, "")).get();
+          const image_xpaths = [];
 
-          imagesUrls = Array.from(new Set(imagesUrls));
-          await downloadImages(imagesUrls, imagesDIR, uuid)
+          let imageUrls = await Promise.all(image_xpaths.map(async _xpath => {      
+               try {
+                    await page.waitForXPath(_xpath, { timeout: 5000 });
+               } catch (error) {
+
+               }
+
+               const imageElements = await page.$x(_xpath);
+               
+               // Get the src attribute of each image element found by the XPath
+               const srcUrls = await Promise.all(imageElements.map(async element => {
+                   let src = await page.evaluate(el => el.getAttribute('src')?.replace(/(-[0-9]+x[0-9]+)/g, ""), element);
+                   return src;
+               }));
+               
+               return srcUrls;
+          }));
+
+          imageUrls = imageUrls.flat();
+          imageUrls = [...new Set(imageUrls)];
+          await downloadImages(imageUrls, imagesDIR, sku);
 
 
           // download pdfs
