@@ -110,8 +110,7 @@ async function downloadImages(imagesUrls, imagesDIR, uuid) {
                 }
 
                 // Generate uuidv4
-                const shortUuid = uuidv4()?.replace(/-/g, "")?.slice(0, 4);
-                const localFileName = `${uuid}-${shortUuid}${imageType}`;
+                const localFileName = `${uuid}-${i+1}${imageType}`;
                 const imageDir = path.normalize(path.join(imagesDIR, localFileName));
                 fs.writeFileSync(imageDir, buffer);
             }

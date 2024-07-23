@@ -30,10 +30,11 @@ async function existsUrl() {
 // ============================================ removeUrl
 async function removeUrl() {
      const existsQuery = `
-        SELECT * FROM unvisited u 
-        order by "id" ASC
-        limit 1
-    `
+          SELECT * FROM unvisited u 
+          ORDER BY RANDOM()
+          LIMIT 1
+     `
+ 
      const deleteQuery = `
           DELETE FROM unvisited 
           WHERE id=$1
@@ -162,13 +163,13 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const $ = await cheerio.load(html);
 
           const data = {};
-          data["title"] = $('notFound').length ? $('notFound').text().trim() : "";
-          data["category"] = $('notFound').last().length
-               ? $('notFound').last()
+          data["title"] = $('h1').length ? $('h1').text()?.replace(/\s+/g, ' ')?.trim() : "";
+          data["category"] = $('#__next > div > div > div.container > div > div a:last').last().length
+               ? $('#__next > div > div > div.container > div > div a:last').last()
                     .map((i, a) => $(a).text().trim()).get().join(" > ")
                : "";
 
-          data["brand"] = $('notFound').text()?.trim() || '';
+          data["brand"] = $('#__next > div > div > section > div > div > div > div > div.mantine-rtl-105jbfs > span').text()?.trim() || '';
 
           data['unitOfMeasurement'] = 'عدد'
           data["price"] = "";
@@ -179,7 +180,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const mainXpath = '';
           if (xpaths.length) {
                // Find Price
-               const [amount, xpath] = await getPrice(page, xpaths, currency);
+               const [amount, xpath] = await getPrice(page, xpaths, false);
 
                // Check Price Is Finite
                if (isFinite(amount)) {
@@ -192,7 +193,6 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           }
                
      
-
           // price_2
           // const offPercent = $('notFound').get()
           // if (offPercent.length) {
@@ -218,7 +218,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const specificationString = Object.keys(specification).map((key) => `${key} : ${specification[key]}`).join("\n");
 
           // descriptionString
-          const descriptionString = $('notFound')
+          const descriptionString = $('#__next div.prose:first')
                .map((i, e) => $(e).text()?.trim())
                .get()
                .join('\n');
@@ -227,11 +227,11 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
           const uuid = uuidv4().replace(/-/g, "");
 
           // Download Images
-          const image_xpaths = [];
+          const image_xpaths = ['/html/body/div[1]/div/div/section/div[1]/div[1]//img'];
 
           let imageUrls = await Promise.all(image_xpaths.map(async _xpath => {      
                try {
-                    await page.waitForXPath(_xpath, { timeout: 5000 });
+                    await page.waitForXPath(_xpath, { timeout: 3000 });
                } catch (error) {
 
                }
@@ -249,7 +249,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
           imageUrls = imageUrls.flat();
           imageUrls = [...new Set(imageUrls)];
-          await downloadImages(imageUrls, imagesDIR, sku);
+          await downloadImages(imageUrls, imagesDIR, uuid);
 
 
           // download pdfs
