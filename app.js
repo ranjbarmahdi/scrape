@@ -260,7 +260,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         imageUrls = imageUrls.flat();
         imageUrls = [...new Set(imageUrls)];
-        await downloadImages(imageUrls, imagesDIR, sku);
+        await downloadImages(imageUrls, imagesDIR, uuid);
 
         // download pdfs
         let pdfUrls = $('NotFound')
