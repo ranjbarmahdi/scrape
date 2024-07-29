@@ -163,16 +163,18 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data['title'] = $('notFound').length ? $('notFound').text().trim() : '';
-        data['category'] = $('notFound').last().length
-            ? $('notFound')
+        data['title'] = $('h1').length
+            ? `${$('h1').text().trim()} ${'برند اتصالات مکانیکی سهند'}`
+            : '';
+        data['category'] = $('.wd-breadcrumbs > nav > a:last').last().length
+            ? $('.wd-breadcrumbs > nav > a:last')
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
                   .join(' > ')
             : '';
 
-        data['brand'] = $('notFound').text()?.trim() || '';
+        data['brand'] = $('notFound').text()?.trim() || 'اتصالات مکانیکی سهند';
 
         data['unitOfMeasurement'] = 'عدد';
         data['price'] = '';
@@ -224,7 +226,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
             .join('\n');
 
         // descriptionString
-        const descriptionString = $('notFound')
+        const descriptionString = $('.woocommerce-product-details__short-description > p')
             .map((i, e) => $(e).text()?.trim())
             .get()
             .join('\n');
@@ -233,7 +235,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, '');
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = [
+            '/html/body/div[1]/div[1]/div/div/div/div[2]/div[1]/div[2]/div/div/div[1]/div//img',
+        ];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -260,7 +264,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         imageUrls = imageUrls.flat();
         imageUrls = [...new Set(imageUrls)];
-        await downloadImages(imageUrls, imagesDIR, sku);
+        await downloadImages(imageUrls, imagesDIR, uuid);
 
         // download pdfs
         let pdfUrls = $('NotFound')
@@ -350,6 +354,7 @@ async function main() {
                 IMAGES_DIR,
                 DOCUMENTS_DIR
             );
+
             const insertQueryInput = [
                 productInfo.URL,
                 productInfo.xpath,
@@ -438,5 +443,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
