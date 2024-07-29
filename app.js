@@ -315,7 +315,7 @@ async function main() {
     let browser;
     let page;
     try {
-        const DATA_DIR = path.normalize(__dirname + '/directory');
+        const DATA_DIR = path.normalize(__dirname + '/afradarb');
         const IMAGES_DIR = path.normalize(DATA_DIR + '/images');
         const DOCUMENTS_DIR = path.normalize(DATA_DIR + '/documents');
 
