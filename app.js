@@ -164,27 +164,34 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
-                  .last()
+        data["title"] = $("h1.product_title ").length
+            ? `${$("h1.product_title ").text()?.replace("مشخصات", "")?.trim()}`
+            : "";
+        if (!data["title"]?.includes("ریاتیس")) {
+            data["title"] = `${data["title"]} ${"برند آریاتیس"}`;
+        }
+        data["category"] = $(".posted_in > a").length
+            ? $(".posted_in > a")
                   .map((i, a) => $(a).text().trim())
                   .get()
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "آریاتیس";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
         data["xpath"] = "";
 
         // price_1
-        const xpaths = [];
-        const mainXpath = "";
+        const xpaths = [
+            "/html/body/div[3]/main/div[2]/div[2]/div/div[1]/div[2]/div[3]/p[1]/span/bdi/text()",
+        ];
+        const mainXpath =
+            "/html/body/div[3]/main/div[2]/div[2]/div/div[1]/div[2]/div[3]/p[1]/span/bdi/text()";
         if (xpaths.length) {
             // Find Price
-            const [amount, xpath] = await getPrice(page, xpaths, currency);
+            const [amount, xpath] = await getPrice(page, xpaths, false);
 
             // Check Price Is Finite
             if (isFinite(amount)) {
@@ -208,7 +215,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
+        const rowElements = $(".shop_attributes > tbody tr");
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
             const key = $(row).find("> th:first-child").text()?.trim();
@@ -234,7 +241,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = ["/html/body/div[3]/main/div[2]/div[2]/div/div[1]/div[1]//img"];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
