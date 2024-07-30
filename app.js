@@ -164,16 +164,18 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
+        data["title"] = $("h3.title").first().length
+            ? `${$("h3.title").first().text().trim()} ${"برند ایران آلیان"}`
+            : "";
+        data["category"] = $(".posted_in > span > a").last().length
+            ? $(".posted_in > span > a")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "ایران آلیان";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
@@ -234,7 +236,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = [
+            "/html/body/div[1]/div/div/div/div/section[2]/div/div/div/div/div/section/div/div/div[1]//img",
+        ];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -439,5 +443,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);

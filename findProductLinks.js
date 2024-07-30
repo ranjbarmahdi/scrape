@@ -44,8 +44,9 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = $("h4 > a")
+            .map((i, a) => $(a).attr("href")?.trim())
+            .get();
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,9 +126,9 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = $(".pic-shop > a")
+                    .map((i, e) => $(e).attr("href"))
+                    .get();
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -159,14 +160,16 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = [
+            "https://iranalian.com/%d8%af%d8%b3%d8%aa%d9%87-%d8%a8%d9%86%d8%af%db%8c-%d9%85%d8%ad%d8%b5%d9%88%d9%84%d8%a7%d8%aa/",
+        ];
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,
