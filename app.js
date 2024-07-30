@@ -164,16 +164,18 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
+        data["title"] = $(".product_title").length
+            ? `${$(".product_title").text().trim()} ${"برند فاوانیا"}`
+            : "";
+        data["category"] = $(".posted_in > a").last().length
+            ? $(".posted_in > a")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "فاوانیا";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
@@ -208,7 +210,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
+        const rowElements = $("notFound").filter((i, e) => {
+            return $(this)?.text()?.includes(":");
+        });
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
             const key = $(row).find("> th:first-child").text()?.trim();
@@ -225,7 +229,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
             .join("\n");
 
         // descriptionString
-        const descriptionString = $("notFound")
+        const descriptionString = $("#tab-description")
             .map((i, e) => $(e).text()?.trim())
             .get()
             .join("\n");
@@ -233,8 +237,18 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         // Generate uuidv4
         const uuid = uuidv4().replace(/-/g, "");
 
+        try {
+            await page.waitForXpath(
+                "/html/body/div[1]/div/div[3]/div/div/div[1]/div[2]/div[1]/div[1]//img",
+                { timeout: 4000 }
+            );
+        } catch (error) {
+            console.log("object");
+        }
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = [
+            "/html/body/div[1]/div/div[3]/div/div/div[1]/div[2]/div[1]/div[1]//img",
+        ];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -338,7 +352,7 @@ async function main() {
 
             // Lunch Browser
             await delay(Math.random() * 4000);
-            browser = await getBrowser(randomProxy, true, false);
+            browser = await getBrowser(randomProxy, false, false);
             page = await browser.newPage();
             await page.setViewport({
                 width: 1920,
@@ -439,5 +453,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
