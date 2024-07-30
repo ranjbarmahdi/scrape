@@ -5,15 +5,16 @@ const {
     checkMemoryCpu,
     downloadImages,
     convertToEnglishNumber,
-} = require('./utils');
-const omitEmpty = require('omit-empty');
-const { v4: uuidv4 } = require('uuid');
-const fetch = require('node-fetch');
-const cheerio = require('cheerio');
-const db = require('./config.js');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
+} = require("./utils");
+const omitEmpty = require("omit-empty");
+const { v4: uuidv4 } = require("uuid");
+const fetch = require("node-fetch");
+const cheerio = require("cheerio");
+const db = require("./config.js");
+const path = require("path");
+require("dotenv").config();
+const fs = require("fs");
+const os = require("os");
 // const cron = require('node-cron');
 // const CronJob = require('cron').CronJob;
 
@@ -28,7 +29,7 @@ async function existsUrl() {
         if (urlRow) return true;
         return false;
     } catch (error) {
-        console.log('we have no url', error);
+        console.log("we have no url", error);
     }
 }
 
@@ -50,7 +51,7 @@ async function removeUrl() {
         }
         return urlRow;
     } catch (error) {
-        console.log('we have no url', error);
+        console.log("we have no url", error);
     }
 }
 
@@ -65,7 +66,7 @@ async function insertProduct(queryValues) {
         const result = await db.oneOrNone(query, queryValues);
         return result;
     } catch (error) {
-        console.log('Error in insertProduct :', error.message);
+        console.log("Error in insertProduct :", error.message);
     }
 }
 
@@ -118,7 +119,7 @@ async function insertUrlToVisited(url) {
 // ============================================ findMinPrice
 async function getPrice(page, xpaths, currency) {
     let price = Infinity;
-    let xpath = '';
+    let xpath = "";
     try {
         if (xpaths.length == 0) {
             return [price, xpath];
@@ -130,7 +131,7 @@ async function getPrice(page, xpaths, currency) {
                 const priceElements = await page.$x(_xpath);
                 if (priceElements.length) {
                     let priceText = await page.evaluate(
-                        (elem) => elem.textContent?.replace(/[^\u06F0-\u06F90-9]/g, ''),
+                        (elem) => elem.textContent?.replace(/[^\u06F0-\u06F90-9]/g, ""),
                         priceElements[0]
                     );
                     priceText = convertToEnglishNumber(priceText);
@@ -141,11 +142,11 @@ async function getPrice(page, xpaths, currency) {
                     }
                 }
             } catch (error) {
-                console.log('Error in getPrice Function Foor Loop :', error.message);
+                console.log("Error in getPrice Function Foor Loop :", error.message);
             }
         }
     } catch (error) {
-        console.log('Error In getPrice :', error);
+        console.log("Error In getPrice :", error);
     } finally {
         return [price, xpath];
     }
@@ -163,34 +164,34 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data['title'] = $('notFound').length ? $('notFound').text().trim() : '';
-        data['category'] = $('notFound').last().length
-            ? $('notFound')
+        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
+        data["category"] = $("notFound").last().length
+            ? $("notFound")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
-                  .join(' > ')
-            : '';
+                  .join(" > ")
+            : "";
 
-        data['brand'] = $('notFound').text()?.trim() || '';
+        data["brand"] = $("notFound").text()?.trim() || "";
 
-        data['unitOfMeasurement'] = 'عدد';
-        data['price'] = '';
-        data['xpath'] = '';
+        data["unitOfMeasurement"] = "عدد";
+        data["price"] = "";
+        data["xpath"] = "";
 
         // price_1
         const xpaths = [];
-        const mainXpath = '';
+        const mainXpath = "";
         if (xpaths.length) {
             // Find Price
             const [amount, xpath] = await getPrice(page, xpaths, currency);
 
             // Check Price Is Finite
             if (isFinite(amount)) {
-                data['price'] = amount;
-                data['xpath'] = xpath;
+                data["price"] = amount;
+                data["xpath"] = xpath;
             } else {
-                data['xpath'] = mainXpath;
+                data["xpath"] = mainXpath;
             }
         }
 
@@ -207,30 +208,30 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $('notFound');
+        const rowElements = $("notFound");
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
-            const key = $(row).find('> th:first-child').text()?.trim();
+            const key = $(row).find("> th:first-child").text()?.trim();
             const value = $(row)
-                .find('> td > p')
+                .find("> td > p")
                 .map((i, p) => $(p)?.text()?.trim())
                 .get()
-                .join('-');
+                .join("-");
             specification[key] = value;
         }
         specification = omitEmpty(specification);
         const specificationString = Object.keys(specification)
             .map((key) => `${key} : ${specification[key]}`)
-            .join('\n');
+            .join("\n");
 
         // descriptionString
-        const descriptionString = $('notFound')
+        const descriptionString = $("notFound")
             .map((i, e) => $(e).text()?.trim())
             .get()
-            .join('\n');
+            .join("\n");
 
         // Generate uuidv4
-        const uuid = uuidv4().replace(/-/g, '');
+        const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
         const image_xpaths = [];
@@ -247,7 +248,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                 const srcUrls = await Promise.all(
                     imageElements.map(async (element) => {
                         let src = await page.evaluate(
-                            (el) => el.getAttribute('src')?.replace(/(-[0-9]+x[0-9]+)/g, ''),
+                            (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
                             element
                         );
                         return src;
@@ -263,10 +264,10 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         await downloadImages(imageUrls, imagesDIR, uuid);
 
         // download pdfs
-        let pdfUrls = $('NotFound')
-            .map((i, e) => $(e).attr('href'))
+        let pdfUrls = $("NotFound")
+            .map((i, e) => $(e).attr("href"))
             .get()
-            .filter((href) => href.includes('pdf'));
+            .filter((href) => href.includes("pdf"));
         pdfUrls = Array.from(new Set(pdfUrls));
         for (let i = 0; i < pdfUrls.length; i++) {
             try {
@@ -275,32 +276,32 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                 if (response.ok) {
                     const buffer = await response.buffer();
                     const localFileName = `${uuid}-${i + 1}.pdf`;
-                    const documentDir = path.normalize(documentsDir + '/' + localFileName);
+                    const documentDir = path.normalize(documentsDir + "/" + localFileName);
                     fs.writeFileSync(documentDir, buffer);
                 }
             } catch (error) {
-                console.log('Error In Download Documents', error);
+                console.log("Error In Download Documents", error);
             }
         }
 
         // Returning Tehe Required Data For Excel
         const productExcelDataObject = {
             URL: productURL,
-            xpath: data['xpath'],
+            xpath: data["xpath"],
             specifications: specificationString,
             description: descriptionString,
-            price: data['price'],
-            unitOfMeasurement: data['unitOfMeasurement'],
-            category: data['category'],
-            brand: data['brand'],
+            price: data["price"],
+            unitOfMeasurement: data["unitOfMeasurement"],
+            category: data["category"],
+            brand: data["brand"],
             SKU: uuid,
-            name: data['title'],
+            name: data["title"],
             row: rowNumber,
         };
 
         return productExcelDataObject;
     } catch (error) {
-        console.log('Error In scrapSingleProduct in page.goto', error);
+        console.log("Error In scrapSingleProduct in page.goto", error);
         await insertUrlToProblem(productURL);
         return null;
     }
@@ -312,9 +313,9 @@ async function main() {
     let browser;
     let page;
     try {
-        const DATA_DIR = path.normalize(__dirname + '/directory');
-        const IMAGES_DIR = path.normalize(DATA_DIR + '/images');
-        const DOCUMENTS_DIR = path.normalize(DATA_DIR + '/documents');
+        const DATA_DIR = path.normalize(__dirname + `/${process.env.DIRECTORY_NAME}`);
+        const IMAGES_DIR = path.normalize(DATA_DIR + "/images");
+        const DOCUMENTS_DIR = path.normalize(DATA_DIR + "/documents");
 
         // Create SteelAlborz Directory If Not Exists
         if (!fs.existsSync(DATA_DIR)) {
@@ -332,7 +333,7 @@ async function main() {
 
         if (urlRow?.url) {
             // get random proxy
-            const proxyList = [''];
+            const proxyList = [""];
             const randomProxy = getRandomElement(proxyList);
 
             // Lunch Browser
@@ -371,11 +372,11 @@ async function main() {
             }
         }
     } catch (error) {
-        console.log('Error In main Function', error);
+        console.log("Error In main Function", error);
         await insertUrlToProblem(urlRow?.url);
     } finally {
         // Close page and browser
-        console.log('End');
+        console.log("End");
         if (page) await page.close();
         if (browser) await browser.close();
     }
@@ -391,7 +392,7 @@ async function run_1(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
           percentage of memory usage = ${memoryUsagePercentage}
           percentage of cpu usage = ${cpuUsagePercentage}\n`;
 
-        console.log('main function does not run.\n');
+        console.log("main function does not run.\n");
         console.log(status);
     }
 }

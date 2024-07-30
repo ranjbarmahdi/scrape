@@ -9,7 +9,7 @@ services:
     ports:
       - "4011:4008"
     volumes:
-      - ./-----:/usr/src/app/-----
+      - ./${DIRECTORY_NAME}:/usr/src/app/${DIRECTORY_NAME}
     networks:
       - custom_network
 
