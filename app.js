@@ -271,7 +271,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         pdfUrls = Array.from(new Set(pdfUrls));
         for (let i = 0; i < pdfUrls.length; i++) {
             try {
-                const pdfUrl = imagesUrls[i];
+                const pdfUrl = pdfUrls[i];
                 const response = await fetch(pdfUrl);
                 if (response.ok) {
                     const buffer = await response.buffer();
