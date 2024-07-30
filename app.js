@@ -238,7 +238,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         try {
-            await page.waitForXpath(
+            await page.waitForXPath(
                 "/html/body/div[1]/div/div[3]/div/div/div[1]/div[2]/div[1]/div[1]//img",
                 { timeout: 4000 }
             );
