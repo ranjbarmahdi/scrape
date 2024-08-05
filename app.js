@@ -210,14 +210,12 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound").filter((i, e) => {
-            return $(this)?.text()?.includes(":");
-        });
+        const rowElements = $(".shop_attributes tr");
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
             const key = $(row).find("> th:first-child").text()?.trim();
             const value = $(row)
-                .find("> td > p")
+                .find("> td > p ")
                 .map((i, p) => $(p)?.text()?.trim())
                 .get()
                 .join("-");
@@ -250,30 +248,10 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
             "/html/body/div[1]/div/div[3]/div/div/div[1]/div[2]/div[1]/div[1]//img",
         ];
 
-        let imageUrls = await Promise.all(
-            image_xpaths.map(async (_xpath) => {
-                try {
-                    await page.waitForXPath(_xpath, { timeout: 5000 });
-                } catch (error) {}
+        let imageUrls = $(".wp-post-image.lazyDone").map((i, e) => {
+            return $(e).attr("src");
+        });
 
-                const imageElements = await page.$x(_xpath);
-
-                // Get the src attribute of each image element found by the XPath
-                const srcUrls = await Promise.all(
-                    imageElements.map(async (element) => {
-                        let src = await page.evaluate(
-                            (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
-                            element
-                        );
-                        return src;
-                    })
-                );
-
-                return srcUrls;
-            })
-        );
-
-        imageUrls = imageUrls.flat();
         imageUrls = [...new Set(imageUrls)];
         await downloadImages(imageUrls, imagesDIR, uuid);
 
@@ -352,7 +330,7 @@ async function main() {
 
             // Lunch Browser
             await delay(Math.random() * 4000);
-            browser = await getBrowser(randomProxy, false, false);
+            browser = await getBrowser(randomProxy, true, false);
             page = await browser.newPage();
             await page.setViewport({
                 width: 1920,
