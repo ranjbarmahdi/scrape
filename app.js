@@ -152,154 +152,220 @@ async function getPrice(page, xpaths, currency) {
     }
 }
 
+function generateCombinations(arrays, prefix = []) {
+    if (!arrays.length) {
+        return [prefix];
+    }
+
+    const [first, ...rest] = arrays;
+    const result = [];
+
+    for (const value of first) {
+        result.push(...generateCombinations(rest, [...prefix, value]));
+    }
+
+    return result;
+}
+
 // ============================================ scrapSingleProduct
 async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, rowNumber = 1) {
     try {
         console.log(`======================== Start scraping : \n${productURL}\n`);
-        await page.goto(productURL, { timeout: 180000 });
+        page.goto(productURL, {timeout: 180000});
 
+        await delay(5000);
         await delay(5000);
 
         const html = await page.content();
         const $ = await cheerio.load(html);
 
-        const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
-                  .last()
-                  .map((i, a) => $(a).text().trim())
-                  .get()
-                  .join(" > ")
-            : "";
+        let title = $("h2.product_title ").length ? $("h2.product_title ").text().trim() : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        let names = [];
 
-        data["unitOfMeasurement"] = "عدد";
-        data["price"] = "";
-        data["xpath"] = "";
+        let variants = $(".variations tbody tr td").get();
+        variants = variants.slice(0, variants.length / 2);
 
-        // price_1
-        const xpaths = [];
-        const mainXpath = "";
-        if (xpaths.length) {
-            // Find Price
-            const [amount, xpath] = await getPrice(page, xpaths, currency);
+        // Extract variant values
+        const variantArrays = variants.map((variant) => {
+            const liElements = $(variant).find("ul li").get();
+            return liElements.map((li) => $(li).attr("title")?.trim());
+        });
 
-            // Check Price Is Finite
-            if (isFinite(amount)) {
-                data["price"] = amount;
-                data["xpath"] = xpath;
-            } else {
-                data["xpath"] = mainXpath;
+        // Generate all combinations of variants
+        const combinations = generateCombinations(variantArrays);
+
+        // Append combinations to the title and push to the names array
+        for (const combination of combinations) {
+            names.push(`${title} ${combination.join(" ")}`);
+        }
+
+        console.log(names);
+        for (const name of names) {
+            const data = {};
+            data["title"] = name.trim();
+            data["category"] = $(".product_meta > div > span > a:first").last().length
+                ? $(".product_meta > div > span > a:first")
+                      .last()
+                      .map((i, a) => $(a).text().trim())
+                      .get()
+                      .join(" > ")
+                : "";
+
+            data["brand"] = $("notFound").text()?.trim() || "ایمن آب";
+
+            if (!data["title"]?.includes("ایمن")) {
+                data["title"] = `${data["title"]} ${"برند ایمن آب"}`;
             }
-        }
 
-        // price_2
-        // const offPercent = $('notFound').get()
-        // if (offPercent.length) {
-        //      data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-        //      data["xpath"] = "";
-        // }
-        // else {
-        //      data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-        //      data["xpath"] = '';
-        // }
+            data["unitOfMeasurement"] = "عدد";
+            data["price"] = "";
+            data["xpath"] = "";
 
-        // specification, specificationString
-        let specification = {};
-        const rowElements = $("notFound");
-        for (let i = 0; i < rowElements.length; i++) {
-            const row = rowElements[i];
-            const key = $(row).find("> th:first-child").text()?.trim();
-            const value = $(row)
-                .find("> td > p")
-                .map((i, p) => $(p)?.text()?.trim())
-                .get()
-                .join("-");
-            specification[key] = value;
-        }
-        specification = omitEmpty(specification);
-        const specificationString = Object.keys(specification)
-            .map((key) => `${key} : ${specification[key]}`)
-            .join("\n");
+            // price_1
+            const xpaths = [
+                "/html/body/div[2]/div/div[3]/div/div/div[1]/div[2]/div[1]/div[2]/p/span/span/bdi/text()",
+                "/html/body/div[2]/div/div[3]/div/div/div[1]/div[2]/div[1]/div[2]/p/span/bdi/text()",
+            ];
+            const mainXpath =
+                "/html/body/div[2]/div/div[3]/div/div/div[1]/div[2]/div[1]/div[2]/p/span/span/bdi/text()";
+            if (xpaths.length) {
+                // Find Price
+                const [amount, xpath] = await getPrice(page, xpaths, false);
 
-        // descriptionString
-        const descriptionString = $("notFound")
-            .map((i, e) => $(e).text()?.trim())
-            .get()
-            .join("\n");
-
-        // Generate uuidv4
-        const uuid = uuidv4().replace(/-/g, "");
-
-        // Download Images
-        const image_xpaths = [];
-
-        let imageUrls = await Promise.all(
-            image_xpaths.map(async (_xpath) => {
-                try {
-                    await page.waitForXPath(_xpath, { timeout: 5000 });
-                } catch (error) {}
-
-                const imageElements = await page.$x(_xpath);
-
-                // Get the src attribute of each image element found by the XPath
-                const srcUrls = await Promise.all(
-                    imageElements.map(async (element) => {
-                        let src = await page.evaluate(
-                            (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
-                            element
-                        );
-                        return src;
-                    })
-                );
-
-                return srcUrls;
-            })
-        );
-
-        imageUrls = imageUrls.flat();
-        imageUrls = [...new Set(imageUrls)];
-        await downloadImages(imageUrls, imagesDIR, uuid);
-
-        // download pdfs
-        let pdfUrls = $("NotFound")
-            .map((i, e) => $(e).attr("href"))
-            .get()
-            .filter((href) => href.includes("pdf"));
-        pdfUrls = Array.from(new Set(pdfUrls));
-        for (let i = 0; i < pdfUrls.length; i++) {
-            try {
-                const pdfUrl = pdfUrls[i];
-                const response = await fetch(pdfUrl);
-                if (response.ok) {
-                    const buffer = await response.buffer();
-                    const localFileName = `${uuid}-${i + 1}.pdf`;
-                    const documentDir = path.normalize(documentsDir + "/" + localFileName);
-                    fs.writeFileSync(documentDir, buffer);
+                // Check Price Is Finite
+                if (isFinite(amount)) {
+                    data["price"] = amount;
+                    data["xpath"] = xpath;
+                } else {
+                    data["xpath"] = mainXpath;
                 }
-            } catch (error) {
-                console.log("Error In Download Documents", error);
             }
+
+            // price_2
+            // const offPercent = $('notFound').get()
+            // if (offPercent.length) {
+            //      data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
+            //      data["xpath"] = "";
+            // }
+            // else {
+            //      data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
+            //      data["xpath"] = '';
+            // }
+
+            // specification, specificationString
+            let specification = {};
+            const rowElements = $(".shop_attributes tr");
+            for (let i = 0; i < rowElements.length; i++) {
+                const row = rowElements[i];
+                const key = $(row).find("> th:first-child").text()?.trim();
+                const value = $(row)
+                    .find("> td")
+                    .map((i, p) => $(p)?.text()?.trim())
+                    .get()
+                    .join("-");
+                specification[key] = value;
+            }
+            specification = omitEmpty(specification);
+            const specificationString = Object.keys(specification)
+                .map((key) => `${key} : ${specification[key]}`)
+                .join("\n");
+
+            // descriptionString
+            const descriptionString = $("notFound")
+                .map((i, e) => $(e).text()?.trim())
+                .get()
+                .join("\n");
+
+            // Generate uuidv4
+            const uuid = uuidv4().replace(/-/g, "");
+
+            // Download Images
+            const image_xpaths = [
+                "/html/body/div[2]/div/div[3]/div/div/div[1]/div[2]/div[1]/div[1]//img",
+            ];
+
+            let imageUrls = await Promise.all(
+                image_xpaths.map(async (_xpath) => {
+                    try {
+                        await page.waitForXPath(_xpath, { timeout: 5000 });
+                    } catch (error) {}
+
+                    const imageElements = await page.$x(_xpath);
+
+                    // Get the src attribute of each image element found by the XPath
+                    const srcUrls = await Promise.all(
+                        imageElements.map(async (element) => {
+                            let src = await page.evaluate(
+                                (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
+                                element
+                            );
+                            return src;
+                        })
+                    );
+
+                    return srcUrls;
+                })
+            );
+
+            imageUrls = imageUrls.flat();
+            imageUrls = [...new Set(imageUrls)];
+            await downloadImages(imageUrls, imagesDIR, uuid);
+
+            // download pdfs
+            let pdfUrls = $("NotFound")
+                .map((i, e) => $(e).attr("href"))
+                .get()
+                .filter((href) => href.includes("pdf"));
+            pdfUrls = Array.from(new Set(pdfUrls));
+            for (let i = 0; i < pdfUrls.length; i++) {
+                try {
+                    const pdfUrl = pdfUrls[i];
+                    const response = await fetch(pdfUrl);
+                    if (response.ok) {
+                        const buffer = await response.buffer();
+                        const localFileName = `${uuid}-${i + 1}.pdf`;
+                        const documentDir = path.normalize(documentsDir + "/" + localFileName);
+                        fs.writeFileSync(documentDir, buffer);
+                    }
+                } catch (error) {
+                    console.log("Error In Download Documents", error);
+                }
+            }
+
+            // Returning Tehe Required Data For Excel
+            const productExcelDataObject = {
+                URL: productURL,
+                xpath: data["xpath"],
+                specifications: specificationString,
+                description: descriptionString,
+                price: data["price"],
+                unitOfMeasurement: data["unitOfMeasurement"],
+                category: data["category"],
+                brand: data["brand"],
+                SKU: uuid,
+                name: data["title"],
+                row: rowNumber,
+            };
+
+            const insertQueryInput = [
+                productExcelDataObject.URL,
+                productExcelDataObject.xpath,
+                productExcelDataObject.specifications,
+                productExcelDataObject.description,
+                productExcelDataObject.price,
+                productExcelDataObject.unitOfMeasurement,
+                productExcelDataObject.category,
+                productExcelDataObject.brand,
+                productExcelDataObject.SKU,
+                productExcelDataObject.name,
+                productExcelDataObject.row,
+            ];
+
+            await insertProduct(insertQueryInput);
         }
 
-        // Returning Tehe Required Data For Excel
-        const productExcelDataObject = {
-            URL: productURL,
-            xpath: data["xpath"],
-            specifications: specificationString,
-            description: descriptionString,
-            price: data["price"],
-            unitOfMeasurement: data["unitOfMeasurement"],
-            category: data["category"],
-            brand: data["brand"],
-            SKU: uuid,
-            name: data["title"],
-            row: rowNumber,
-        };
-
-        return productExcelDataObject;
+        return "productExcelDataObject";
     } catch (error) {
         console.log("Error In scrapSingleProduct in page.goto", error);
         await insertUrlToProblem(productURL);
@@ -338,38 +404,16 @@ async function main() {
 
             // Lunch Browser
             await delay(Math.random() * 4000);
-            browser = await getBrowser(randomProxy, true, false);
+            browser = await getBrowser(randomProxy, false, false);
             page = await browser.newPage();
             await page.setViewport({
                 width: 1920,
                 height: 1080,
             });
 
-            const productInfo = await scrapSingleProduct(
-                page,
-                urlRow.url,
-                IMAGES_DIR,
-                DOCUMENTS_DIR
-            );
-            const insertQueryInput = [
-                productInfo.URL,
-                productInfo.xpath,
-                productInfo.specifications,
-                productInfo.description,
-                productInfo.price,
-                productInfo.unitOfMeasurement,
-                productInfo.category,
-                productInfo.brand,
-                productInfo.SKU,
-                productInfo.name,
-                productInfo.row,
-            ];
+            await scrapSingleProduct(page, urlRow.url, IMAGES_DIR, DOCUMENTS_DIR);
 
-            // if exists productInfo insert it to products
-            if (productInfo) {
-                await insertProduct(insertQueryInput);
-                await insertUrlToVisited(urlRow?.url);
-            }
+            await insertUrlToVisited(urlRow?.url);
         }
     } catch (error) {
         console.log("Error In main Function", error);
@@ -439,5 +483,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
