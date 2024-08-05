@@ -164,51 +164,66 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
+        data["title"] = $(".product_title ").length
+            ? `${$(".product_title ").text().trim()} ${"برند آرین بهرنگ"}`
+            : "";
+        data["category"] = $(".woocommerce-breadcrumb > a:last").last().length
+            ? $(".woocommerce-breadcrumb > a:last")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "آرین بهرنگ";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
         data["xpath"] = "";
 
         // price_1
-        const xpaths = [];
-        const mainXpath = "";
-        if (xpaths.length) {
-            // Find Price
-            const [amount, xpath] = await getPrice(page, xpaths, currency);
+        const xpaths = [
+            "/html/body/div[1]/div[2]/div/div/div/div[2]/div[1]/div[2]/div/div/div[2]/div/p[1]/ins/span/bdi/text()",
+            "/html/body/div[1]/div[2]/div/div/div/div[2]/div[1]/div[2]/div/div/div[2]/div/p[1]/del/span/bdi/text()",
+            "/html/body/div[1]/div[2]/div/div/div/div[2]/div[1]/div[2]/div/div/div[2]/div/p/span[1]/bdi/text()",
+        ];
+        const mainXpath =
+            "/html/body/div[1]/div[2]/div/div/div/div[2]/div[1]/div[2]/div/div/div[2]/div/p[1]/ins/span/bdi/text()";
+        // if (xpaths.length) {
+        //     // Find Price
+        //     const [amount, xpath] = await getPrice(page, xpaths, false);
 
-            // Check Price Is Finite
-            if (isFinite(amount)) {
-                data["price"] = amount;
-                data["xpath"] = xpath;
-            } else {
-                data["xpath"] = mainXpath;
-            }
-        }
+        //     // Check Price Is Finite
+        //     if (isFinite(amount)) {
+        //         data["price"] = amount;
+        //         data["xpath"] = xpath;
+        //     } else {
+        //         data["xpath"] = mainXpath;
+        //     }
+        // }
 
         // price_2
-        // const offPercent = $('notFound').get()
-        // if (offPercent.length) {
-        //      data["price"] = $('notFound').text().replace(/[^\u06F0-\u06F90-9]/g, "")
-        //      data["xpath"] = "";
-        // }
-        // else {
-        //      data["price"] = $('notFound').first().text().replace(/[^\u06F0-\u06F90-9]/g, "");
-        //      data["xpath"] = '';
-        // }
+        const offPercent = $("p.price > del");
+        if (offPercent.length) {
+            data["price"] = $("p.price > ins")
+                .text()
+                .replace(/[^\u06F0-\u06F90-9]/g, "");
+            data["price"] = convertToEnglishNumber(data["price"]) * 10;
+            data["xpath"] =
+                "/html/body/div[1]/div[2]/div/div/div/div[2]/div[1]/div[2]/div/div/div[2]/div/p/ins/span/bdi/text()";
+        } else {
+            data["price"] = $("p.price > span > bdi")
+                .first()
+                .text()
+                .replace(/[^\u06F0-\u06F90-9]/g, "");
+            data["price"] = convertToEnglishNumber(data["price"]) * 10;
+            data["xpath"] =
+                "/html/body/div[1]/div[2]/div/div/div/div[2]/div[1]/div[2]/div/div/div[2]/div/p/span/bdi/text()";
+        }
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
+        const rowElements = $(".shop_attributes tr");
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
             const key = $(row).find("> th:first-child").text()?.trim();
@@ -225,7 +240,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
             .join("\n");
 
         // descriptionString
-        const descriptionString = $("notFound")
+        const descriptionString = $(".woocommerce-product-details__short-description p")
             .map((i, e) => $(e).text()?.trim())
             .get()
             .join("\n");
@@ -234,9 +249,20 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = [
+            "/html/body/div[1]/div[2]/div/div/div/div[2]/div[1]/div[2]/div/div/div[1]//img",
+            "/html/body/div[1]/div[2]/div/div/div/div[2]/div[1]/div[2]/div/div/div[1]/div/div/div[1]//img",
+        ];
 
-        let imageUrls = await Promise.all(
+        let imageUrls = $(".product-images img")
+            .map((i, e) => {
+                return $(e)
+                    .attr("src")
+                    ?.replace(/(-[0-9]+x[0-9]+)/g, "")
+                    ?.trim();
+            })
+            .get();
+        await Promise.all(
             image_xpaths.map(async (_xpath) => {
                 try {
                     await page.waitForXPath(_xpath, { timeout: 5000 });
@@ -247,10 +273,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                 // Get the src attribute of each image element found by the XPath
                 const srcUrls = await Promise.all(
                     imageElements.map(async (element) => {
-                        let src = await page.evaluate(
-                            (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
-                            element
-                        );
+                        let src = await page.evaluate((el) => el.getAttribute("src"), element);
                         return src;
                     })
                 );
@@ -259,6 +282,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
             })
         );
 
+        console.log(imageUrls);
         imageUrls = imageUrls.flat();
         imageUrls = [...new Set(imageUrls)];
         await downloadImages(imageUrls, imagesDIR, uuid);
