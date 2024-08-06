@@ -164,7 +164,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
+        data["title"] = $(".page-title").length
+            ? `${$(".page-title").text().trim()} ${"برند بتن شیمی خاورمیانه"}`
+            : "";
         data["category"] = $("notFound").last().length
             ? $("notFound")
                   .last()
@@ -173,7 +175,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "بتن شیمی خاورمیانه";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
@@ -225,7 +227,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
             .join("\n");
 
         // descriptionString
-        const descriptionString = $("notFound")
+        const descriptionString = $(".theme-content  > p")
+            .filter((i, e) => $(e).text()?.trim())
             .map((i, e) => $(e).text()?.trim())
             .get()
             .join("\n");
@@ -234,7 +237,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = ["/html/body/div[2]/div/div[1]/div/div/div[1]//img"];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -439,5 +442,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
