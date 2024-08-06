@@ -1,11 +1,11 @@
-const { createObjectCsvWriter } = require('csv-writer');
-const puppeteer = require('puppeteer');
-const fetch = require('node-fetch');
-const csv = require('csv-parser');
-const reader = require('xlsx');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
+const { createObjectCsvWriter } = require("csv-writer");
+const puppeteer = require("puppeteer");
+const fetch = require("node-fetch");
+const csv = require("csv-parser");
+const reader = require("xlsx");
+const path = require("path");
+const fs = require("fs");
+const os = require("os");
 
 // ==================================== writeExcel
 function writeExcel(jsonFile, excelDir) {
@@ -21,13 +21,13 @@ async function readCsv(csvFilePath) {
         const result = [];
         fs.createReadStream(csvFilePath)
             .pipe(csv())
-            .on('data', (data) => result.push(data))
-            .on('end', () => {
+            .on("data", (data) => result.push(data))
+            .on("end", () => {
                 console.log(`CSV file ${path.basename(csvFilePath)} read successfully`);
                 res(result);
             })
-            .on('error', (err) => {
-                console.log('Eror in readCsv function :', err);
+            .on("error", (err) => {
+                console.log("Eror in readCsv function :", err);
                 rej(err);
             });
     });
@@ -63,7 +63,7 @@ async function scrollToEnd(page) {
     await page.evaluate(async () => {
         await new Promise((resolve) => {
             let totalHeight = 0;
-            const distance = 3;
+            const distance = 1;
             const maxScrolls = 9999999; // You can adjust the number of scrolls
 
             const scrollInterval = setInterval(() => {
@@ -76,7 +76,7 @@ async function scrollToEnd(page) {
                     clearInterval(scrollInterval);
                     resolve();
                 }
-            }, 20); // You can adjust the scroll interval
+            }, 30); // You can adjust the scroll interval
         });
     });
 }
@@ -98,7 +98,7 @@ async function downloadImages(imagesUrls, imagesDIR, uuid) {
                 const buffer = await response.buffer();
 
                 // Determine image type based on URL
-                let imageType = '.jpg'; // default
+                let imageType = ".jpg"; // default
                 const imageExtensionMatch = imageUrl.match(
                     /\.(jpg|jpeg|png|webp|gif|bmp|tiff|svg|ico)$/i
                 );
@@ -112,7 +112,7 @@ async function downloadImages(imagesUrls, imagesDIR, uuid) {
                 fs.writeFileSync(imageDir, buffer);
             }
         } catch (error) {
-            console.log('Error In Download Images', error);
+            console.log("Error In Download Images", error);
         }
     }
 }
@@ -122,48 +122,48 @@ async function login(page, url, userOrPhone, pass) {
     try {
         await page.goto(url, { timeout: 360000 });
 
-        let u = '09376993135';
-        let p = 'hd6730mrm';
+        let u = "09376993135";
+        let p = "hd6730mrm";
         // sleep 5 second
-        console.log('-------sleep 5 second');
+        console.log("-------sleep 5 second");
         await delay(5000);
 
         // load cheerio
         const html = await page.content();
         const $ = cheerio.load(html);
 
-        const usernameInputElem = await page.$$('input#username');
-        await page.evaluate((e) => (e.value = '09376993135'), usernameInputElem[0]);
+        const usernameInputElem = await page.$$("input#username");
+        await page.evaluate((e) => (e.value = "09376993135"), usernameInputElem[0]);
         await delay(3000);
 
-        const continueElem = await page.$$('.register_page__inner > button[type=submit]');
+        const continueElem = await page.$$(".register_page__inner > button[type=submit]");
         await continueElem[0].click();
         await delay(3000);
 
-        const passwordInputElem = await page.$$('input#myPassword');
-        await passwordInputElem[0].type('hd6730mrm');
+        const passwordInputElem = await page.$$("input#myPassword");
+        await passwordInputElem[0].type("hd6730mrm");
         // await page.evaluate((e) => e.value = "hd6730mrm" ,passwordInputElem[0]);
         await delay(3000);
 
-        const enterElem = await page.$$('.register_page__inner > button[type=submit]');
+        const enterElem = await page.$$(".register_page__inner > button[type=submit]");
         await enterElem[0].click();
         await delay(3000);
     } catch (error) {
-        console.log('Error In login function', error);
+        console.log("Error In login function", error);
     }
 }
 
 //============================================ convert To English Number
 function convertToEnglishNumber(inputNumber) {
-    const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    const persianNumbers = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
 
     // Check if the input contains Persian numbers
-    const containsPersianNumber = new RegExp(`[${persianNumbers.join('')}]`).test(inputNumber);
+    const containsPersianNumber = new RegExp(`[${persianNumbers.join("")}]`).test(inputNumber);
 
     if (containsPersianNumber) {
         // Convert Persian numbers to English numbers
         for (let i = 0; i < 10; i++) {
-            const persianDigit = new RegExp(persianNumbers[i], 'g');
+            const persianDigit = new RegExp(persianNumbers[i], "g");
             inputNumber = inputNumber.replace(persianDigit, i.toString());
         }
         return inputNumber;
@@ -178,21 +178,21 @@ const getBrowser = async (proxyServer, headless = true, withProxy = true) => {
     try {
         const args = (withProxy) => {
             if (withProxy == true) {
-                console.log('terue');
+                console.log("terue");
                 return [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
                     `--proxy-server=${proxyServer}`,
                 ];
             } else {
-                return ['--no-sandbox', '--disable-setuid-sandbox'];
+                return ["--no-sandbox", "--disable-setuid-sandbox"];
             }
         };
         // Lunch Browser
         const browser = await puppeteer.launch({
             headless: headless, // Set to true for headless mode, false for non-headless
             executablePath:
-                process.env.NODE_ENV === 'production'
+                process.env.NODE_ENV === "production"
                     ? process.env.PUPPETEER_EXECUTABLE_PATH
                     : puppeteer.executablePath(),
             args: args(withProxy),
@@ -201,7 +201,7 @@ const getBrowser = async (proxyServer, headless = true, withProxy = true) => {
 
         return browser;
     } catch (error) {
-        console.log('Error in getBrowserWithProxy function', error);
+        console.log("Error in getBrowserWithProxy function", error);
     }
 };
 
