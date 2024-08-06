@@ -164,27 +164,33 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
+        data["title"] = $("h1.wz-shop-product-title").length
+            ? $("h1.wz-shop-product-title").text().trim()
+            : "";
+        data["category"] = $(".wz-breadcrumb > ul > li > a:last").last().length
+            ? $(".wz-breadcrumb > ul > li > a:last")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["title"] = `${data["category"]} ${data["title"]} ${"برند سیتکو"}`;
+
+        data["brand"] = $("notFound").text()?.trim() || "سیتکو";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
         data["xpath"] = "";
 
         // price_1
-        const xpaths = [];
+        const xpaths = [
+            "/html/body/div[4]/div[3]/div/div[1]/div/article/div[3]/div[2]/span[2]/text()",
+        ];
         const mainXpath = "";
         if (xpaths.length) {
             // Find Price
-            const [amount, xpath] = await getPrice(page, xpaths, currency);
+            const [amount, xpath] = await getPrice(page, xpaths, false);
 
             // Check Price Is Finite
             if (isFinite(amount)) {
@@ -208,12 +214,12 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
+        const rowElements = $(".product-attributes tr");
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
             const key = $(row).find("> th:first-child").text()?.trim();
             const value = $(row)
-                .find("> td > p")
+                .find("> td")
                 .map((i, p) => $(p)?.text()?.trim())
                 .get()
                 .join("-");
@@ -234,7 +240,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = ["/html/body/div[4]/div[3]/div/div[1]/div/article//img"];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -439,5 +445,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
