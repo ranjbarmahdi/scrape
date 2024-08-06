@@ -164,7 +164,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
+        data["title"] = $(".product_title").length
+            ? `${$(".product_title").text().trim()} ${"برند محک"}`
+            : "";
         data["category"] = $("notFound").last().length
             ? $("notFound")
                   .last()
@@ -173,7 +175,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "محک";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
@@ -208,24 +210,38 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
-        for (let i = 0; i < rowElements.length; i++) {
-            const row = rowElements[i];
+        const rowElements_1 = $(".shop_attributes tr");
+        for (let i = 0; i < rowElements_1.length; i++) {
+            const row = rowElements_1[i];
             const key = $(row).find("> th:first-child").text()?.trim();
             const value = $(row)
-                .find("> td > p")
+                .find("> td")
                 .map((i, p) => $(p)?.text()?.trim())
                 .get()
                 .join("-");
             specification[key] = value;
         }
+
+        const rowElements_2 = $("#tab-description tr");
+        for (let i = 0; i < rowElements_2.length; i++) {
+            const row = rowElements_2[i];
+            const key = $(row).find("> td:first-child").text()?.trim();
+            const value = $(row)
+                .find("> td:last-child")
+                .map((i, p) => $(p)?.text()?.trim())
+                .get()
+                .join("-");
+            specification[key] = value;
+        }
+
         specification = omitEmpty(specification);
         const specificationString = Object.keys(specification)
             .map((key) => `${key} : ${specification[key]}`)
             .join("\n");
 
         // descriptionString
-        const descriptionString = $("notFound")
+        const descriptionString = $(".woocommerce-product-details__short-description > p")
+            .filter((i, e) => $(e).text()?.trim())
             .map((i, e) => $(e).text()?.trim())
             .get()
             .join("\n");
@@ -234,32 +250,19 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = ["/html/body/div[3]/section[1]/div/div[1]/div//img"];
 
-        let imageUrls = await Promise.all(
-            image_xpaths.map(async (_xpath) => {
-                try {
-                    await page.waitForXPath(_xpath, { timeout: 5000 });
-                } catch (error) {}
+        let imageUrls = $(".product > section:first img")
+            .map((i, e) =>
+                $(e)
+                    .attr("src")
+                    ?.replace(/(-[0-9]+x[0-9]+)/g, "")
+                    ?.trim()
+            )
+            .get()
+            .filter((url) => !url?.includes("icon"));
 
-                const imageElements = await page.$x(_xpath);
-
-                // Get the src attribute of each image element found by the XPath
-                const srcUrls = await Promise.all(
-                    imageElements.map(async (element) => {
-                        let src = await page.evaluate(
-                            (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
-                            element
-                        );
-                        return src;
-                    })
-                );
-
-                return srcUrls;
-            })
-        );
-
-        imageUrls = imageUrls.flat();
+    
         imageUrls = [...new Set(imageUrls)];
         await downloadImages(imageUrls, imagesDIR, uuid);
 
@@ -439,5 +442,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
