@@ -164,9 +164,11 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
+        data["title"] = $(".product-title").length
+            ? `${$(".product-title").text().trim()} ${"برند بلندا"}`
+            : "";
+        data["category"] = $(".breadcrumb > li > a").last().length
+            ? $(".breadcrumb > li > a")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
@@ -225,7 +227,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
             .join("\n");
 
         // descriptionString
-        const descriptionString = $("notFound")
+        const descriptionString = $("#tab-product-desc p")
             .map((i, e) => $(e).text()?.trim())
             .get()
             .join("\n");
@@ -234,7 +236,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = ['//*[@id="main"]/article/div[1]/div[1]/figure//img'];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -248,7 +250,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                 const srcUrls = await Promise.all(
                     imageElements.map(async (element) => {
                         let src = await page.evaluate(
-                            (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
+                            (el) =>
+                                "https://bolanda-co.com" +
+                                el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
                             element
                         );
                         return src;
@@ -439,5 +443,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
