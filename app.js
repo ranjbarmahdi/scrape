@@ -164,16 +164,18 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
+        data["title"] = $(".product_title ").length
+            ? `${$(".product_title ").text().trim()}`
+            : "";
+        data["category"] = $(".posted_in > a:first").last().length
+            ? $(".posted_in > a:first")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "پارس آرای کوهستان";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
@@ -208,15 +210,14 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
+        const rowElements = $("#tab-description p").filter((i, e) => {
+            return $(e)?.text()?.includes(':')
+        })
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
-            const key = $(row).find("> th:first-child").text()?.trim();
-            const value = $(row)
-                .find("> td > p")
-                .map((i, p) => $(p)?.text()?.trim())
-                .get()
-                .join("-");
+            const rowString = $(row)?.text()?.trim();
+            const key = rowString?.split(':')[0]?.trim();
+            const value = rowString?.split(":")[1]?.trim();
             specification[key] = value;
         }
         specification = omitEmpty(specification);
@@ -225,7 +226,8 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
             .join("\n");
 
         // descriptionString
-        const descriptionString = $("notFound")
+        const descriptionString = $(".woocommerce-product-details__short-description > p")
+            .filter((i, e) => $(e).text()?.trim())
             .map((i, e) => $(e).text()?.trim())
             .get()
             .join("\n");
@@ -236,30 +238,13 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         // Download Images
         const image_xpaths = [];
 
-        let imageUrls = await Promise.all(
-            image_xpaths.map(async (_xpath) => {
-                try {
-                    await page.waitForXPath(_xpath, { timeout: 5000 });
-                } catch (error) {}
-
-                const imageElements = await page.$x(_xpath);
-
-                // Get the src attribute of each image element found by the XPath
-                const srcUrls = await Promise.all(
-                    imageElements.map(async (element) => {
-                        let src = await page.evaluate(
-                            (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
-                            element
-                        );
-                        return src;
-                    })
-                );
-
-                return srcUrls;
-            })
+        let imageUrls = $(".woocommerce-product-gallery img").map((i, e) =>
+            $(e)
+                .attr("src")
+                ?.replace(/(.*)-[0-9]+x[0-9]+/, "$1") // Replaces the last occurrence
+                ?.trim()
         );
 
-        imageUrls = imageUrls.flat();
         imageUrls = [...new Set(imageUrls)];
         await downloadImages(imageUrls, imagesDIR, uuid);
 
