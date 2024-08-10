@@ -164,16 +164,18 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
+        data["title"] = $(".product_title").length
+            ? `${$(".product_title").text().trim()} ${"برند پارسیان ماشین سازان تبریز"}`
+            : "";
+        data["category"] = $(".breadcrumbs > li > a:last").last().length
+            ? $(".breadcrumbs > li > a:last")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "پارسیان ماشین سازان تبریز";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
@@ -208,15 +210,17 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
+        const rowElements = $(".woocommerce-product-details__short-description li").filter(
+            (i, e) => {
+                return $(e)?.text()?.includes(":");
+            }
+        );
+
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
-            const key = $(row).find("> th:first-child").text()?.trim();
-            const value = $(row)
-                .find("> td > p")
-                .map((i, p) => $(p)?.text()?.trim())
-                .get()
-                .join("-");
+            const rowString = $(row)?.text()?.trim();
+            const key = rowString?.split(":")[0]?.trim();
+            const value = rowString?.split(":")[1]?.trim();
             specification[key] = value;
         }
         specification = omitEmpty(specification);
@@ -234,7 +238,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = [
+            "/html/body/div[1]/div[4]/main/div/div/div/div/div[2]/div[1]/div[1]//img",
+        ];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -439,5 +445,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
