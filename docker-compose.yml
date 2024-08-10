@@ -1,13 +1,13 @@
 version: '3.7'
 
 services:
-  node-app-1:
+  node-app:
     user: root
     restart: always
     build:
       context: .
     ports:
-      - "4011:4008"
+      - "8000-8100:4008"
     volumes:
       - ./${DIRECTORY_NAME}:/usr/src/app/${DIRECTORY_NAME}
     networks:
