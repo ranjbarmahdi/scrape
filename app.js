@@ -164,9 +164,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
+        data["title"] = $("h1:first").length ? $("h1:last").text().trim() : "";
+        data["category"] = $(".yoast-breadcrumb > span > span > a").last().length
+            ? $(".yoast-breadcrumb > span > span > a")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
@@ -208,7 +208,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
+        const rowElements = $(".shop_attributes tr:lt(-2)");
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
             const key = $(row).find("> th:first-child").text()?.trim();
@@ -218,6 +218,10 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                 .get()
                 .join("-");
             specification[key] = value;
+        }
+        if ("برند" in specification) {
+            data["brand"] = specification["برند"];
+            data["title"] = `${data["title"]} برند ${specification["برند"]}`;
         }
         specification = omitEmpty(specification);
         const specificationString = Object.keys(specification)
@@ -235,7 +239,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = [
+            "/html/body/div[1]/div[1]/div/div/div/div/div/section[1]/div/div[1]/div//img",
+        ];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -265,10 +271,11 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         await downloadImages(imageUrls, imagesDIR, uuid);
 
         // download pdfs
-        let pdfUrls = $("NotFound")
+        let pdfUrls = $("a")
             .map((i, e) => $(e).attr("href"))
             .get()
-            .filter((href) => href.includes("pdf"));
+            .filter((href) => href.includes("pdf"))
+            .map((url) => "https://tsaco-diesel.com" + url);
         pdfUrls = Array.from(new Set(pdfUrls));
         for (let i = 0; i < pdfUrls.length; i++) {
             try {
@@ -440,5 +447,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);

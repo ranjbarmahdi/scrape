@@ -1,21 +1,20 @@
 const cheerio = require("cheerio");
-const { getBrowser, getRandomElement, shuffleArray, delay } = require('./utils')
-const db = require('./config.js');
-
+const { getBrowser, getRandomElement, shuffleArray, delay } = require("./utils");
+const db = require("./config.js");
 
 // ============================================ insertUrl
 async function insertUrl(url) {
     const existsQuery = `
         SELECT * FROM unvisited u 
         where "url"=$1
-    `
+    `;
 
     const insertQuery = `
         INSERT INTO unvisited ("url")
         VALUES ($1)
         RETURNING *;
-    `
-    const urlInDb = await db.oneOrNone(existsQuery, [url])
+    `;
+    const urlInDb = await db.oneOrNone(existsQuery, [url]);
     if (!urlInDb) {
         try {
             const result = await db.query(insertQuery, [url]);
@@ -26,7 +25,6 @@ async function insertUrl(url) {
     }
 }
 
-
 // ============================================ findAllMainLinks
 async function findAllMainLinks(page, initialUrl) {
     const allMainLinks = [];
@@ -34,8 +32,7 @@ async function findAllMainLinks(page, initialUrl) {
         const url = initialUrl;
         await page.goto(url, { timeout: 360000 });
 
-
-        // sleep 5 second 
+        // sleep 5 second
         console.log("-------sleep 5 second");
         await delay(5000);
 
@@ -44,12 +41,33 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = $("#menu-categories > li")
+            .map((i, e) => {
+                const inner = $(e)
+                    .find("div > div > ul > li > a")
+                    .map((i, w) => {
+                        return $(w).attr("href")?.trim();
+                    })
+                    .get(); // Convert jQuery object to array
+
+                if (inner.length) {
+                    return inner; // Return the array directly
+                } else {
+                    const outer = $(e)
+                        .find(">a")
+                        .map((i, w) => {
+                            return $(w).attr("href")?.trim();
+                        })
+                        .get(); // Convert jQuery object to array
+
+                    return outer; // Return the array directly
+                }
+            })
+            .get(); // Flatten the result and convert to array
+
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
-
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
     }
@@ -57,13 +75,11 @@ async function findAllMainLinks(page, initialUrl) {
     return Array.from(new Set(allMainLinks));
 }
 
-
 // ============================================ findAllPagesLinks
 async function findAllPagesLinks(page, mainLinks) {
+    let allPagesLinks = [];
 
-    let allPagesLinks = []
-
-    // find pagination and pages     
+    // find pagination and pages
     for (let i = 0; i < mainLinks.length; i++) {
         try {
             const url = mainLinks[i];
@@ -76,35 +92,30 @@ async function findAllPagesLinks(page, mainLinks) {
             const $ = cheerio.load(html);
 
             // find last page number and preduce other pages urls
-            const paginationElement = $('notFound');
+            const paginationElement = $("notFound");
             console.log("Pagination Element : ", paginationElement.length);
             if (paginationElement.length) {
-
-                let lsatPageNumber = $('notFound')?.last().text()?.trim();
+                let lsatPageNumber = $("notFound")?.last().text()?.trim();
                 console.log("Last Page Number : ", lsatPageNumber);
                 lsatPageNumber = Number(lsatPageNumber);
                 for (let j = 1; j <= lsatPageNumber; j++) {
-                    const newUrl = url + `?page=${j}`
-                    allPagesLinks.push(newUrl)
+                    const newUrl = url + `?page=${j}`;
+                    allPagesLinks.push(newUrl);
                 }
+            } else {
+                allPagesLinks.push(url);
             }
-            else {
-                allPagesLinks.push(url)
-            }
-
         } catch (error) {
             console.log("Error in findAllPagesLinks", error);
         }
     }
 
-    allPagesLinks = shuffleArray(allPagesLinks)
-    return Array.from(new Set(allPagesLinks))
+    allPagesLinks = shuffleArray(allPagesLinks);
+    return Array.from(new Set(allPagesLinks));
 }
-
 
 // ============================================ findAllProductsLinks
 async function findAllProductsLinks(page, allPagesLinks) {
-
     for (let i = 0; i < allPagesLinks.length; i++) {
         try {
             const url = allPagesLinks[i];
@@ -125,9 +136,9 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = $(".wd-entities-title > a")
+                    .map((i, e) => $(e).attr("href"))
+                    .get();
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -140,42 +151,38 @@ async function findAllProductsLinks(page, allPagesLinks) {
                     }
                 }
 
-
-                nextPageBtn = await page.$$('notFound')
+                nextPageBtn = await page.$$("a.next.page-numbers");
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
                 }
                 await delay(3000);
-            }
-            while (nextPageBtn.length)
+            } while (nextPageBtn.length);
         } catch (error) {
             console.log("Error In findAllProductsLinks function", error);
         }
     }
 }
 
-
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ["https://tsaco-diesel.com/"];
 
         // get random proxy
-        const proxyList = [''];
+        const proxyList = [""];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,
             height: 1080,
         });
 
-
         for (const u of INITIAL_PAGE_URL) {
-            const mainLinks = await findAllMainLinks(page, u)
+            const mainLinks = await findAllMainLinks(page, u);
             // const AllPagesLinks = await findAllPagesLinks(page, mainLinks);
             await findAllProductsLinks(page, mainLinks);
         }
