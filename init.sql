@@ -1,24 +1,23 @@
-CREATE TABLE IF NOT EXISTS public.visited (
-	id serial4 NOT NULL,
-	url text NULL,
-	CONSTRAINT visited_pkey PRIMARY KEY (id),
-	CONSTRAINT visited_url_key UNIQUE (url)
-);
-
-CREATE TABLE IF NOT EXISTS unvisited (
-	id serial4 NOT NULL,
-	url text NOT NULL,
-	CONSTRAINT unvisited_pkey PRIMARY KEY (id),
-	CONSTRAINT unvisited_url_key UNIQUE (url)
-);
-
-CREATE TABLE IF NOT EXISTS problem (
+CREATE TABLE public.problem (
 	id serial4 NOT NULL,
 	url text NULL,
 	CONSTRAINT problem_pkey PRIMARY KEY (id),
 	CONSTRAINT problem_url_key UNIQUE (url)
 );
 
+CREATE TABLE public.unvisited (
+	id serial4 NOT NULL,
+	url text NOT NULL,
+	CONSTRAINT unvisited_pkey PRIMARY KEY (id),
+	CONSTRAINT unvisited_url_key UNIQUE (url)
+);
+
+CREATE TABLE public.visited (
+	id serial4 NOT NULL,
+	url text NULL,
+	CONSTRAINT visited_pkey PRIMARY KEY (id),
+	CONSTRAINT visited_url_key UNIQUE (url)
+);
 
 CREATE TABLE public.products (
 	id serial4 NOT NULL,
@@ -35,5 +34,6 @@ CREATE TABLE public.products (
 	"row" int4 NULL,
 	CONSTRAINT products_pkey PRIMARY KEY (id),
 	CONSTRAINT products_sku_key UNIQUE (sku),
-	CONSTRAINT unique_name_url UNIQUE ("name",url)
+	CONSTRAINT unique_name_url UNIQUE (name, url)
 );
+

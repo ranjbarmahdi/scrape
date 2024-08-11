@@ -226,6 +226,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // descriptionString
         const descriptionString = $("notFound")
+            .filter((i, e) => $(e).text()?.trim())
             .map((i, e) => $(e).text()?.trim())
             .get()
             .join("\n");
