@@ -164,16 +164,16 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
-        data["category"] = $("notFound").last().length
-            ? $("notFound")
+        data["title"] = $("h5").length ? $("h5").text().trim() : "";
+        data["category"] = $(".breadcrumb-item > small > a:nth-child(2)").last().length
+            ? $(".breadcrumb-item > small > a:nth-child(2)")
                   .last()
                   .map((i, a) => $(a).text().trim())
                   .get()
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "تیک";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
@@ -208,18 +208,32 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
+        const rowElements = $(".table-borderless tr");
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
-            const key = $(row).find("> th:first-child").text()?.trim();
+            const key = $(row).find("> th:first-child").text()?.replace(":", "")?.trim();
             const value = $(row)
-                .find("> td > p")
+                .find("> td ")
                 .map((i, p) => $(p)?.text()?.trim())
                 .get()
                 .join("-");
             specification[key] = value;
         }
         specification = omitEmpty(specification);
+
+        if (data["category"]) {
+            data["title"] = `${data["category"]} ${data["title"]}`;
+        }
+
+        if (specification["دسته بندی"]) {
+            data["title"] = `${data["title"]} سری ${specification["دسته بندی"]?.replace(
+                "Series",
+                ""
+            )}`;
+        }
+
+        data["title"] = `${data["title"]} ${"برند تیک"}`;
+
         const specificationString = Object.keys(specification)
             .map((key) => `${key} : ${specification[key]}`)
             .join("\n");
@@ -235,7 +249,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = ["/html/body/div[2]/main/div//img"];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -249,7 +263,12 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                 const srcUrls = await Promise.all(
                     imageElements.map(async (element) => {
                         let src = await page.evaluate(
-                            (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
+                            (el) =>
+                                "https://tikhandle.com" +
+                                el
+                                    .getAttribute("src")
+                                    ?.replace("../..", "")
+                                    ?.replace(/(-[0-9]+x[0-9]+)/g, ""),
                             element
                         );
                         return src;
@@ -440,5 +459,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
