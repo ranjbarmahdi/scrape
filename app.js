@@ -164,7 +164,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
+        data["title"] = $("h1.product_title").length
+            ? `${$("h1.product_title").text().trim()} ${"برند مارال درب"}`
+            : "";
         data["category"] = $("notFound").last().length
             ? $("notFound")
                   .last()
@@ -173,7 +175,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "مارال درب";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
@@ -208,15 +210,17 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
 
         // specification, specificationString
         let specification = {};
-        const rowElements = $("notFound");
+        const rowElements = $(
+            ".woocommerce-Tabs-panel--description > p.box-collateral-content"
+        ).filter((i, e) => {
+            return $(e).text()?.includes(":");
+        });
+
         for (let i = 0; i < rowElements.length; i++) {
             const row = rowElements[i];
-            const key = $(row).find("> th:first-child").text()?.trim();
-            const value = $(row)
-                .find("> td > p")
-                .map((i, p) => $(p)?.text()?.trim())
-                .get()
-                .join("-");
+            const rowString = $(row).text()?.trim();
+            const key = rowString?.split(":")[0]?.trim();
+            const value = rowString?.split(":")[1]?.trim();
             specification[key] = value;
         }
         specification = omitEmpty(specification);
@@ -235,7 +239,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
+        const image_xpaths = [
+            "/html/body/div[4]/div/main/div[1]/div/div/article/div[2]/div[1]/div[4]//img",
+        ];
 
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
@@ -440,5 +446,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
