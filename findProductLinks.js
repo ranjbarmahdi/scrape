@@ -48,7 +48,7 @@ async function findAllMainLinks(page, initialUrl) {
             .map((i, a) => $(a).attr('href')?.trim()).get()
 
         // Push This Page Products Urls To allProductsLinks
-        allMainLinks.push(...mainLinks);
+        allMainLinks.push(initialUrl);
 
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
@@ -125,9 +125,9 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = $("h3.h6 > a")
+                    .map((i, e) => $(e).attr("href"))
+                    .get();
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -141,12 +141,12 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 }
 
 
-                nextPageBtn = await page.$$('notFound')
+                nextPageBtn = await page.$$("a.btn.btn-link.text-default-color.btn-icon-right");
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
                 }
-                await delay(3000);
+                await delay(5000);
             }
             while (nextPageBtn.length)
         } catch (error) {
@@ -159,14 +159,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ["https://kelarpooya.com/shop/"];
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,
