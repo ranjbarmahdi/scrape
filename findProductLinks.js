@@ -1,21 +1,20 @@
 const cheerio = require("cheerio");
-const { getBrowser, getRandomElement, shuffleArray, delay } = require('./utils')
-const db = require('./config.js');
-
+const { getBrowser, getRandomElement, shuffleArray, delay } = require("./utils");
+const db = require("./config.js");
 
 // ============================================ insertUrl
 async function insertUrl(url) {
     const existsQuery = `
         SELECT * FROM unvisited u 
         where "url"=$1
-    `
+    `;
 
     const insertQuery = `
         INSERT INTO unvisited ("url")
         VALUES ($1)
         RETURNING *;
-    `
-    const urlInDb = await db.oneOrNone(existsQuery, [url])
+    `;
+    const urlInDb = await db.oneOrNone(existsQuery, [url]);
     if (!urlInDb) {
         try {
             const result = await db.query(insertQuery, [url]);
@@ -26,7 +25,6 @@ async function insertUrl(url) {
     }
 }
 
-
 // ============================================ findAllMainLinks
 async function findAllMainLinks(page, initialUrl) {
     const allMainLinks = [];
@@ -34,8 +32,7 @@ async function findAllMainLinks(page, initialUrl) {
         const url = initialUrl;
         await page.goto(url, { timeout: 360000 });
 
-
-        // sleep 5 second 
+        // sleep 5 second
         console.log("-------sleep 5 second");
         await delay(5000);
 
@@ -44,12 +41,33 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = $("#row-1386231262 > div > div > div > .box-image > a")
+            .map((i, a) => {
+                if ($(a).attr("href")?.includes("http")) {
+                    return $(a).attr("href")?.trim();
+                }
+                return "https://kasra.co.com" + $(a).attr("href")?.trim();
+            })
+            .get();
+
+        mainLinks.push(
+            ...[
+                "https://kasra.co.com/product-category/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/%d9%be%d8%b1%db%8c%d8%b2%d9%87%d8%a7%db%8c-%d9%85%da%a9%d9%86%d8%af%d9%87-%d8%ac%d8%a7%d8%b1%d9%88-%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/%d9%be%d8%b1%db%8c%d8%b2-%d9%85%da%a9%d9%86%d8%af%d9%87-%d8%a7%d8%aa%d9%88%d9%85%d8%a7%d8%aa%db%8c%da%a9/",
+                "https://kasra.co.com/product-category/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/%d9%be%d8%b1%db%8c%d8%b2%d9%87%d8%a7%db%8c-%d9%85%da%a9%d9%86%d8%af%d9%87-%d8%ac%d8%a7%d8%b1%d9%88-%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/%d9%be%d8%b1%db%8c%d8%b2-%d8%ac%d8%a7%d8%b1%d9%88%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/",
+                "https://kasra.co.com/product-category/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/%d9%be%d8%b1%db%8c%d8%b2%d9%87%d8%a7%db%8c-%d9%85%da%a9%d9%86%d8%af%d9%87-%d8%ac%d8%a7%d8%b1%d9%88-%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/%d9%be%d8%b1%db%8c%d8%b2-%d8%ae%d8%a7%da%a9-%d8%a7%d9%86%d8%af%d8%a7%d8%b2%db%8c/",
+                "https://kasra.co.com/product-category/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/%d9%be%da%a9-%d9%86%d8%b8%d8%a7%d9%81%d8%aa%db%8c-%d8%ac%d8%a7%d8%b1%d9%88-%d9%85%d8%b1%da%a9%d8%b2%db%8c/",
+                "https://kasra.co.com/product-category/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/%d8%aa%d8%a7%d8%b3%db%8c%d8%b3%d8%a7%d8%aa-%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/",
+                "https://kasra.co.com/product-category/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/%d8%af%d8%b3%d8%aa%da%af%d8%a7%d9%87-%d9%87%d8%a7%db%8c-%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%b1%da%a9%d8%b2%db%8c/",
+                "https://kasra.co.com/product-category/%d8%b5%d9%86%d8%b9%d8%aa%db%8c/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d8%ad%d8%ac%db%8c%d9%85-%d8%b1%d9%88%d8%a8/",
+                "https://kasra.co.com/product-category/%d8%b5%d9%86%d8%b9%d8%aa%db%8c/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%af%d9%84-%d9%be%d8%a7%d9%86%d8%af%d8%a7/",
+                "https://kasra.co.com/product-category/%d8%b5%d9%86%d8%b9%d8%aa%db%8c/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%af%d9%84-%d9%be%d9%84%db%8c-%d8%a7%d8%aa%db%8c%d9%84%d9%86/",
+                "https://kasra.co.com/product-category/%d8%b5%d9%86%d8%b9%d8%aa%db%8c/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d9%85%d8%af%d9%84-%d9%85%d8%a7%d9%85%d9%88%d8%aa/",
+                "https://kasra.co.com/product-category/%d8%b5%d9%86%d8%b9%d8%aa%db%8c/%d8%ac%d8%a7%d8%b1%d9%88%d8%a8%d8%b1%d9%82%db%8c-%d8%af%d8%a7%d8%a6%d9%85-%da%a9%d8%a7%d8%b1/",
+            ]
+        );
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
-
     } catch (error) {
         console.log("Error In findAllMainLinks function", error.message);
     }
@@ -57,13 +75,11 @@ async function findAllMainLinks(page, initialUrl) {
     return Array.from(new Set(allMainLinks));
 }
 
-
 // ============================================ findAllPagesLinks
 async function findAllPagesLinks(page, mainLinks) {
+    let allPagesLinks = [];
 
-    let allPagesLinks = []
-
-    // find pagination and pages     
+    // find pagination and pages
     for (let i = 0; i < mainLinks.length; i++) {
         try {
             const url = mainLinks[i];
@@ -76,35 +92,30 @@ async function findAllPagesLinks(page, mainLinks) {
             const $ = cheerio.load(html);
 
             // find last page number and preduce other pages urls
-            const paginationElement = $('notFound');
+            const paginationElement = $("notFound");
             console.log("Pagination Element : ", paginationElement.length);
             if (paginationElement.length) {
-
-                let lsatPageNumber = $('notFound')?.last().text()?.trim();
+                let lsatPageNumber = $("notFound")?.last().text()?.trim();
                 console.log("Last Page Number : ", lsatPageNumber);
                 lsatPageNumber = Number(lsatPageNumber);
                 for (let j = 1; j <= lsatPageNumber; j++) {
-                    const newUrl = url + `?page=${j}`
-                    allPagesLinks.push(newUrl)
+                    const newUrl = url + `?page=${j}`;
+                    allPagesLinks.push(newUrl);
                 }
+            } else {
+                allPagesLinks.push(url);
             }
-            else {
-                allPagesLinks.push(url)
-            }
-
         } catch (error) {
             console.log("Error in findAllPagesLinks", error);
         }
     }
 
-    allPagesLinks = shuffleArray(allPagesLinks)
-    return Array.from(new Set(allPagesLinks))
+    allPagesLinks = shuffleArray(allPagesLinks);
+    return Array.from(new Set(allPagesLinks));
 }
-
 
 // ============================================ findAllProductsLinks
 async function findAllProductsLinks(page, allPagesLinks) {
-
     for (let i = 0; i < allPagesLinks.length; i++) {
         try {
             const url = allPagesLinks[i];
@@ -125,9 +136,9 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = $(".woocommerce-loop-product__title > a")
+                    .map((i, e) => $(e).attr("href"))
+                    .get();
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -140,29 +151,26 @@ async function findAllProductsLinks(page, allPagesLinks) {
                     }
                 }
 
-
-                nextPageBtn = await page.$$('notFound')
+                nextPageBtn = await page.$$("a.next.page-number");
                 if (nextPageBtn.length) {
                     let btn = nextPageBtn[0];
                     await btn.click();
                 }
                 await delay(3000);
-            }
-            while (nextPageBtn.length)
+            } while (nextPageBtn.length);
         } catch (error) {
             console.log("Error In findAllProductsLinks function", error);
         }
     }
 }
 
-
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ["https://kasra.co.com/"];
 
         // get random proxy
-        const proxyList = [''];
+        const proxyList = [""];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
@@ -173,9 +181,8 @@ async function main() {
             height: 1080,
         });
 
-
         for (const u of INITIAL_PAGE_URL) {
-            const mainLinks = await findAllMainLinks(page, u)
+            const mainLinks = await findAllMainLinks(page, u);
             // const AllPagesLinks = await findAllPagesLinks(page, mainLinks);
             await findAllProductsLinks(page, mainLinks);
         }
