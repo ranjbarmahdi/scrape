@@ -44,8 +44,11 @@ async function findAllMainLinks(page, initialUrl) {
         const $ = cheerio.load(html);
 
         // Getting All Main Urls In This Page
-        const mainLinks = $('notFound')
-            .map((i, a) => $(a).attr('href')?.trim()).get()
+        const mainLinks = $(
+            "body > div.elementor.elementor-9134.elementor-location-header > section.elementor-section.elementor-top-section.elementor-element.elementor-element-dde6ced.elementor-section-full_width.elementor-section-height-default.elementor-section-height-default > div > div > div > div.elementor-element.elementor-element-fae3180.jedv-enabled--yes.e-flex.e-con-boxed.e-con > div > div.elementor-element.elementor-element-50fa9f6.elementor-widget.elementor-widget-jet-mega-menu > div > div > div > div > ul > li:first-child > div > div > div > a"
+        )
+            .map((i, a) => $(a).attr("href")?.trim())
+            .get();
 
         // Push This Page Products Urls To allProductsLinks
         allMainLinks.push(...mainLinks);
@@ -125,9 +128,9 @@ async function findAllProductsLinks(page, allPagesLinks) {
                 const $ = cheerio.load(html);
 
                 // Getting All Products Urls In This Page
-                const productsUrls = $('notFound')
-                    .map((i, e) => $(e).attr('href'))
-                    .get()
+                const productsUrls = $("a.e-con-boxed")
+                    .map((i, e) => $(e).attr("href"))
+                    .get();
 
                 // insert prooduct links to unvisited
                 for (let j = 0; j < productsUrls.length; j++) {
@@ -159,14 +162,14 @@ async function findAllProductsLinks(page, allPagesLinks) {
 // ============================================ Main
 async function main() {
     try {
-        const INITIAL_PAGE_URL = ['url']
+        const INITIAL_PAGE_URL = ["https://shahrokhi.co/"];
 
         // get random proxy
         const proxyList = [''];
         const randomProxy = getRandomElement(proxyList);
 
         // Lunch Browser
-        const browser = await getBrowser(randomProxy, true, false);
+        const browser = await getBrowser(randomProxy, false, false);
         const page = await browser.newPage();
         await page.setViewport({
             width: 1920,
