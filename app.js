@@ -164,7 +164,9 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
         const $ = await cheerio.load(html);
 
         const data = {};
-        data["title"] = $("notFound").length ? $("notFound").text().trim() : "";
+        data["title"] = $("h2.itemTitle").length
+            ? `${$("h2.itemTitle").text().trim()} ${"برند ژینال"}`
+            : "";
         data["category"] = $("notFound").last().length
             ? $("notFound")
                   .last()
@@ -173,7 +175,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                   .join(" > ")
             : "";
 
-        data["brand"] = $("notFound").text()?.trim() || "";
+        data["brand"] = $("notFound").text()?.trim() || "ژینال";
 
         data["unitOfMeasurement"] = "عدد";
         data["price"] = "";
@@ -219,24 +221,25 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                 .join("-");
             specification[key] = value;
         }
+
         specification = omitEmpty(specification);
         const specificationString = Object.keys(specification)
             .map((key) => `${key} : ${specification[key]}`)
             .join("\n");
 
         // descriptionString
-        const descriptionString = $("notFound")
-            .filter((i, e) => $(e).text()?.trim())
-            .map((i, e) => $(e).text()?.trim())
-            .get()
+        const descriptionString = $(".itemFullText > p")
+            ?.first()
+            ?.text()
+            ?.split("\n")
+            .filter((t) => t?.trim())
             .join("\n");
 
         // Generate uuidv4
         const uuid = uuidv4().replace(/-/g, "");
 
         // Download Images
-        const image_xpaths = [];
-
+        const image_xpaths = ['//*[@id="k2Container"]//img'];
         let imageUrls = await Promise.all(
             image_xpaths.map(async (_xpath) => {
                 try {
@@ -249,7 +252,7 @@ async function scrapSingleProduct(page, productURL, imagesDIR, documentsDir, row
                 const srcUrls = await Promise.all(
                     imageElements.map(async (element) => {
                         let src = await page.evaluate(
-                            (el) => el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
+                            (el) => 'https://gitalco.com' + el.getAttribute("src")?.replace(/(-[0-9]+x[0-9]+)/g, ""),
                             element
                         );
                         return src;
@@ -440,5 +443,5 @@ async function run_2(memoryUsagePercentage, cpuUsagePercentage, usageMemory) {
 
 // job.start()
 
-run_1(80, 80, 20);
-// run_2(80, 80, 20);
+// run_1(80, 80, 20);
+run_2(80, 80, 20);
